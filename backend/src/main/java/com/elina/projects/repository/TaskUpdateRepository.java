@@ -58,5 +58,24 @@ public interface TaskUpdateRepository extends TenantAwareRepository<TaskUpdate, 
     @Query("SELECT COALESCE(SUM(tu.actualQty), 0) FROM TaskUpdate tu WHERE tu.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
            "AND tu.task.taskId = :taskId AND tu.activateFlag = true")
     java.math.BigDecimal getTotalActualQtyByTaskId(@Param("taskId") Long taskId);
+
+    /**
+     * Find all task updates for a task, ordered by update date ascending.
+     * Used for day-wise grid display.
+     */
+    @Query("SELECT tu FROM TaskUpdate tu WHERE tu.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
+           "AND tu.task.taskId = :taskId " +
+           "AND (:activeOnly IS NULL OR :activeOnly = false OR tu.activateFlag = true) " +
+           "ORDER BY tu.updateDate ASC")
+    List<TaskUpdate> findByTaskIdOrderByUpdateDate(@Param("taskId") Long taskId, @Param("activeOnly") Boolean activeOnly);
+
+    /**
+     * Find all task updates for current tenant.
+     * Used for tenant-wide reporting.
+     */
+    @Query("SELECT tu FROM TaskUpdate tu WHERE tu.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
+           "AND (:activeOnly IS NULL OR :activeOnly = false OR tu.activateFlag = true) " +
+           "ORDER BY tu.updateDate DESC")
+    List<TaskUpdate> findForTenant(@Param("activeOnly") Boolean activeOnly);
 }
 

@@ -1,37 +1,58 @@
 import { useState, useEffect } from 'react'
 
 /**
- * RuleViolationModal - Displays business rule violations automatically.
+ * RuleViolationModal - Displays business rule violations.
  * 
- * This modal is triggered by the axios interceptor when a BusinessRuleException
- * is thrown from the backend. It listens to the 'businessRuleViolation' custom event.
+ * Can be used in two ways:
+ * 1. Event-based: Listens to 'businessRuleViolation' custom event (for global use in App.jsx)
+ * 2. Prop-based: Controlled via props (ruleNumber, message, hint, onClose)
  * 
- * Usage: Add this component to your App.jsx to handle violations globally.
+ * Usage:
+ * - Global: <RuleViolationModal /> in App.jsx
+ * - Controlled: <RuleViolationModal ruleNumber={...} message={...} hint={...} onClose={...} />
  */
-const RuleViolationModal = () => {
+const RuleViolationModal = ({ ruleNumber, message, hint, onClose }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [violation, setViolation] = useState(null)
 
+  // If props are provided, use controlled mode
+  const isControlled = ruleNumber !== undefined
+
   useEffect(() => {
-    // Listen for business rule violations from axios interceptor
-    const handleViolation = (event) => {
-      setViolation(event.detail)
-      setIsOpen(true)
-    }
+    if (isControlled) {
+      // Controlled mode: show if props are provided
+      if (ruleNumber !== null && ruleNumber !== undefined) {
+        setViolation({ ruleNumber, message, hint })
+        setIsOpen(true)
+      } else {
+        setIsOpen(false)
+        setViolation(null)
+      }
+    } else {
+      // Event-based mode: listen for business rule violations from axios interceptor
+      const handleViolation = (event) => {
+        setViolation(event.detail)
+        setIsOpen(true)
+      }
 
-    window.addEventListener('businessRuleViolation', handleViolation)
+      window.addEventListener('businessRuleViolation', handleViolation)
 
-    return () => {
-      window.removeEventListener('businessRuleViolation', handleViolation)
+      return () => {
+        window.removeEventListener('businessRuleViolation', handleViolation)
+      }
     }
-  }, [])
+  }, [ruleNumber, message, hint, isControlled])
 
   const handleClose = () => {
     setIsOpen(false)
     setViolation(null)
+    if (onClose) {
+      onClose()
+    }
   }
 
-  if (!isOpen || !violation) {
+  const displayViolation = isControlled ? violation : violation
+  if (!isOpen || !displayViolation) {
     return null
   }
 
@@ -72,12 +93,12 @@ const RuleViolationModal = () => {
         <div className="p-6">
           <div className="mb-4">
             <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800 mb-3">
-              Rule #{violation.ruleNumber}
+              Rule #{displayViolation.ruleNumber}
             </div>
-            <p className="text-gray-800 font-medium mb-2">{violation.message}</p>
-            {violation.hint && (
+            <p className="text-gray-800 font-medium mb-2">{displayViolation.message}</p>
+            {displayViolation.hint && (
               <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-md border border-blue-200">
-                <span className="font-semibold text-blue-900">💡 Hint:</span> {violation.hint}
+                <span className="font-semibold text-blue-900">💡 Hint:</span> {displayViolation.hint}
               </p>
             )}
           </div>

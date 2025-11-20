@@ -25,6 +25,9 @@ public interface UserRepository extends TenantAwareRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.id = :id AND u.tenant.id = :tenantId")
     Optional<User> findByIdAndTenantId(@Param("id") Long id, @Param("tenantId") Long tenantId);
 
+    @Query("SELECT u FROM User u JOIN FETCH u.tenant WHERE u.tenant.id = :tenantId")
+    java.util.List<User> findByTenantId(@Param("tenantId") Long tenantId);
+
     boolean existsByEmailAndTenantId(String email, Long tenantId);
 }
 
