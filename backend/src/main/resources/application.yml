@@ -1,0 +1,65 @@
+spring:
+  application:
+    name: authorization-module
+
+  datasource:
+    # Windows Authentication (Integrated Security) configuration
+    url: jdbc:sqlserver://localhost:1433;databaseName=elina_test;encrypt=false;trustServerCertificate=true;loginTimeout=30
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:elina@123}
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    # Note: For Windows Authentication, no username/password needed
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.SQLServerDialect
+        format_sql: true
+        default_schema: dbo
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:your-256-bit-secret-key-change-this-in-production-minimum-32-characters}
+  expiration: 86400000 # 24 hours in milliseconds
+  refresh-expiration: 604800000 # 7 days in milliseconds
+
+# Server Configuration
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+
+# Master Data Cache Configuration
+master-data:
+  cache:
+    ttl-minutes: ${MASTER_DATA_CACHE_TTL:30}
+    enabled: ${MASTER_DATA_CACHE_ENABLED:true}
+
+# Logging Configuration
+logging:
+  level:
+    com.elina: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+

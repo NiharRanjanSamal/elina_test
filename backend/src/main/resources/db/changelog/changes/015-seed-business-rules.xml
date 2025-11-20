@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <!--
+        Seed data for business rules module.
+        Creates default business rules for the DEFAULT tenant (tenant_id = 1).
+        These rules are ACTIVE VALIDATORS that prevent invalid operations.
+    -->
+
+    <changeSet id="015-seed-business-rules" author="business-rule-module">
+        <!-- Allow both old and new checksums since the file was modified after initial execution -->
+        <validCheckSum>9:ce985b1f82333408fe42c6c7d0762d71</validCheckSum>
+        <validCheckSum>9:d87ccba29c421b8060138a2eae84cd55</validCheckSum>
+        
+        <!-- Rule 101: BACKDATE_ALLOWED_TILL -->
+        <insert tableName="business_rules">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="rule_number" valueNumeric="101"/>
+            <column name="control_point" value="TASK_UPDATE"/>
+            <column name="applicability" value="Y"/>
+            <column name="rule_value" value="7"/>
+            <column name="description" value="Maximum number of days allowed for backdating task updates. Value represents the number of days."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Rule 102: BACKDATE_ALLOWED_AFTER_LOCK -->
+        <insert tableName="business_rules">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="rule_number" valueNumeric="102"/>
+            <column name="control_point" value="TASK_UPDATE"/>
+            <column name="applicability" value="Y"/>
+            <column name="rule_value" value="N"/>
+            <column name="description" value="Whether backdating is allowed after lock date. Y = allowed, N = not allowed."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Rule 201: START_DATE_CANNOT_BE_IN_FUTURE -->
+        <insert tableName="business_rules">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="rule_number" valueNumeric="201"/>
+            <column name="control_point" value="TASK"/>
+            <column name="applicability" value="Y"/>
+            <column name="rule_value" value=""/>
+            <column name="description" value="Task start date cannot be in the future. This rule prevents scheduling tasks with future start dates."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Rule 202: WBS_DATE_RANGE_VALIDATION -->
+        <insert tableName="business_rules">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="rule_number" valueNumeric="202"/>
+            <column name="control_point" value="WBS"/>
+            <column name="applicability" value="Y"/>
+            <column name="rule_value" value=""/>
+            <column name="description" value="WBS end date cannot be before start date. Ensures valid date ranges for work breakdown structures."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Rule 203: ALLOCATION_DATE_RANGE_VALIDATION -->
+        <insert tableName="business_rules">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="rule_number" valueNumeric="203"/>
+            <column name="control_point" value="ALLOCATION"/>
+            <column name="applicability" value="Y"/>
+            <column name="rule_value" value=""/>
+            <column name="description" value="Resource allocation end date cannot be before start date. Ensures valid allocation periods."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Rule 204: ATTENDANCE_DATE_VALIDATION -->
+        <insert tableName="business_rules">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="rule_number" valueNumeric="204"/>
+            <column name="control_point" value="ATTENDANCE"/>
+            <column name="applicability" value="Y"/>
+            <column name="rule_value" value=""/>
+            <column name="description" value="Attendance date cannot be in the future. Attendance can only be recorded for today or past dates."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Rule 205: MATERIAL_USAGE_VALIDATION -->
+        <insert tableName="business_rules">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="rule_number" valueNumeric="205"/>
+            <column name="control_point" value="MATERIAL_USAGE"/>
+            <column name="applicability" value="Y"/>
+            <column name="rule_value" value=""/>
+            <column name="description" value="Material usage date cannot be in the future and quantity cannot be negative. Ensures valid material usage entries."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Rule 301: CONFIRMATION_CANNOT_BE_OVERWRITTEN -->
+        <insert tableName="business_rules">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="rule_number" valueNumeric="301"/>
+            <column name="control_point" value="CONFIRMATION"/>
+            <column name="applicability" value="Y"/>
+            <column name="rule_value" value=""/>
+            <column name="description" value="Confirmed entries cannot be modified or overwritten. Once an entry is confirmed, it becomes read-only."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Rule 401: DAILY_UPDATE_CANNOT_EXCEED_PLANNED_QTY -->
+        <insert tableName="business_rules">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="rule_number" valueNumeric="401"/>
+            <column name="control_point" value="TASK_UPDATE"/>
+            <column name="applicability" value="Y"/>
+            <column name="rule_value" value=""/>
+            <column name="description" value="Daily update quantity cannot exceed the planned quantity. Prevents over-reporting of actual work done."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Rule 402: PLAN_VERSION_DATE_VALIDATION -->
+        <insert tableName="business_rules">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="rule_number" valueNumeric="402"/>
+            <column name="control_point" value="PLAN_VERSION"/>
+            <column name="applicability" value="Y"/>
+            <column name="rule_value" value=""/>
+            <column name="description" value="Plan version date must be valid and cannot be in the future. Ensures plan versions are created with valid dates."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Rule 501: ALLOCATION_START_END_DATE_MUST_BE_VALID -->
+        <insert tableName="business_rules">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="rule_number" valueNumeric="501"/>
+            <column name="control_point" value="ALLOCATION"/>
+            <column name="applicability" value="Y"/>
+            <column name="rule_value" value=""/>
+            <column name="description" value="Manpower allocation end date must be on or after the start date. Ensures valid allocation date ranges."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Rule 601: ATTENDANCE_DATE_CANNOT_BE_IN_FUTURE -->
+        <insert tableName="business_rules">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="rule_number" valueNumeric="601"/>
+            <column name="control_point" value="ATTENDANCE"/>
+            <column name="applicability" value="Y"/>
+            <column name="rule_value" value=""/>
+            <column name="description" value="Attendance date cannot be in the future. Attendance can only be posted for today or past dates."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+    </changeSet>
+
+</databaseChangeLog>
+

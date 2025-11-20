@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <!-- Create projects table -->
+    <changeSet id="017-create-projects-table" author="projects-module">
+        <createTable tableName="projects">
+            <column name="project_id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_projects_tenant" references="tenants(id)"/>
+            </column>
+            <column name="project_code" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="project_name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="NVARCHAR(MAX)"/>
+            <column name="start_date" type="DATE"/>
+            <column name="end_date" type="DATE"/>
+            <column name="status" type="VARCHAR(50)"/>
+            <column name="activate_flag" type="BIT" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="BIGINT"/>
+            <column name="created_on" type="DATETIME2" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_by" type="BIGINT"/>
+            <column name="updated_on" type="DATETIME2"/>
+        </createTable>
+
+        <!-- Unique constraint: tenant_id, project_code -->
+        <addUniqueConstraint
+                tableName="projects"
+                columnNames="tenant_id,project_code"
+                constraintName="UQ_projects_tenant_code"/>
+
+        <!-- Indexes for performance -->
+        <createIndex indexName="idx_projects_tenant_id" tableName="projects">
+            <column name="tenant_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_projects_tenant_code" tableName="projects" unique="true">
+            <column name="tenant_id"/>
+            <column name="project_code"/>
+        </createIndex>
+
+        <createIndex indexName="idx_projects_tenant_active" tableName="projects">
+            <column name="tenant_id"/>
+            <column name="activate_flag"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Create wbs table -->
+    <changeSet id="017-create-wbs-table" author="projects-module">
+        <createTable tableName="wbs">
+            <column name="wbs_id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_wbs_tenant" references="tenants(id)"/>
+            </column>
+            <column name="project_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_wbs_project" references="projects(project_id)"/>
+            </column>
+            <column name="parent_wbs_id" type="BIGINT">
+                <constraints foreignKeyName="fk_wbs_parent" references="wbs(wbs_id)"/>
+            </column>
+            <column name="wbs_code" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="wbs_name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="NVARCHAR(MAX)"/>
+            <column name="start_date" type="DATE"/>
+            <column name="end_date" type="DATE"/>
+            <column name="level" type="INT" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="work_center" type="VARCHAR(50)"/>
+            <column name="cost_center" type="VARCHAR(50)"/>
+            <column name="planned_qty" type="DECIMAL(18,2)"/>
+            <column name="actual_qty" type="DECIMAL(18,2)" defaultValueNumeric="0"/>
+            <column name="status" type="VARCHAR(50)"/>
+            <column name="is_confirmed" type="BIT" defaultValueBoolean="false"/>
+            <column name="confirmed_on" type="DATETIME2"/>
+            <column name="confirmed_by" type="BIGINT"/>
+            <column name="is_locked" type="BIT" defaultValueBoolean="false"/>
+            <column name="lock_date" type="DATE"/>
+            <column name="activate_flag" type="BIT" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="BIGINT"/>
+            <column name="created_on" type="DATETIME2" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_by" type="BIGINT"/>
+            <column name="updated_on" type="DATETIME2"/>
+        </createTable>
+
+        <!-- Unique constraint: tenant_id, wbs_code -->
+        <addUniqueConstraint
+                tableName="wbs"
+                columnNames="tenant_id,wbs_code"
+                constraintName="UQ_wbs_tenant_code"/>
+
+        <!-- Indexes for performance -->
+        <createIndex indexName="idx_wbs_tenant_id" tableName="wbs">
+            <column name="tenant_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_wbs_project_id" tableName="wbs">
+            <column name="tenant_id"/>
+            <column name="project_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_wbs_parent_id" tableName="wbs">
+            <column name="tenant_id"/>
+            <column name="parent_wbs_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_wbs_tenant_code" tableName="wbs" unique="true">
+            <column name="tenant_id"/>
+            <column name="wbs_code"/>
+        </createIndex>
+
+        <createIndex indexName="idx_wbs_tenant_active" tableName="wbs">
+            <column name="tenant_id"/>
+            <column name="activate_flag"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Create tasks table -->
+    <changeSet id="017-create-tasks-table" author="projects-module">
+        <createTable tableName="tasks">
+            <column name="task_id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_tasks_tenant" references="tenants(id)"/>
+            </column>
+            <column name="project_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_tasks_project" references="projects(project_id)"/>
+            </column>
+            <column name="wbs_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_tasks_wbs" references="wbs(wbs_id)"/>
+            </column>
+            <column name="task_code" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="task_name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="NVARCHAR(MAX)"/>
+            <column name="start_date" type="DATE"/>
+            <column name="end_date" type="DATE"/>
+            <column name="planned_qty" type="DECIMAL(18,2)"/>
+            <column name="actual_qty" type="DECIMAL(18,2)" defaultValueNumeric="0"/>
+            <column name="unit" type="VARCHAR(20)"/>
+            <column name="status" type="VARCHAR(50)"/>
+            <column name="is_confirmed" type="BIT" defaultValueBoolean="false"/>
+            <column name="confirmed_on" type="DATETIME2"/>
+            <column name="confirmed_by" type="BIGINT"/>
+            <column name="is_locked" type="BIT" defaultValueBoolean="false"/>
+            <column name="lock_date" type="DATE"/>
+            <column name="activate_flag" type="BIT" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="BIGINT"/>
+            <column name="created_on" type="DATETIME2" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_by" type="BIGINT"/>
+            <column name="updated_on" type="DATETIME2"/>
+        </createTable>
+
+        <!-- Unique constraint: tenant_id, task_code -->
+        <addUniqueConstraint
+                tableName="tasks"
+                columnNames="tenant_id,task_code"
+                constraintName="UQ_tasks_tenant_code"/>
+
+        <!-- Indexes for performance -->
+        <createIndex indexName="idx_tasks_tenant_id" tableName="tasks">
+            <column name="tenant_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_tasks_wbs_id" tableName="tasks">
+            <column name="tenant_id"/>
+            <column name="wbs_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_tasks_tenant_code" tableName="tasks" unique="true">
+            <column name="tenant_id"/>
+            <column name="task_code"/>
+        </createIndex>
+
+        <createIndex indexName="idx_tasks_tenant_active" tableName="tasks">
+            <column name="tenant_id"/>
+            <column name="activate_flag"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+

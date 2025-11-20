@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <changeSet id="008-create-page-authorizations-table" author="authorization-module">
+        <createTable tableName="page_authorizations">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="page_path" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="page_name" type="VARCHAR(200)"/>
+            <column name="role_id" type="BIGINT">
+                <constraints foreignKeyName="fk_page_auth_role" references="roles(id)"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints foreignKeyName="fk_page_auth_user" references="users(id)"/>
+            </column>
+            <column name="is_allowed" type="BIT" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="DATETIME2">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="DATETIME2"/>
+        </createTable>
+
+        <createIndex indexName="idx_page_auth_role" tableName="page_authorizations">
+            <column name="role_id"/>
+            <column name="page_path"/>
+        </createIndex>
+
+        <createIndex indexName="idx_page_auth_user" tableName="page_authorizations">
+            <column name="user_id"/>
+            <column name="page_path"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+

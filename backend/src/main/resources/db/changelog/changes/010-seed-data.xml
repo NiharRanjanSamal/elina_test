@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <!--
+        Seed data for authorization module.
+        Creates sample tenants, admin user, roles (SYSTEM_ADMIN, SUPERVISOR, END_USER), and permissions.
+        
+        Default admin credentials:
+        - Tenant Code: DEFAULT
+        - Email: admin@example.com
+        - Password: Admin@123
+    -->
+
+    <changeSet id="010-seed-data" author="authorization-module">
+        
+        <!-- Insert sample tenants -->
+        <insert tableName="tenants">
+            <column name="tenant_code" value="DEFAULT"/>
+            <column name="name" value="Default Tenant"/>
+            <column name="client_code" value="CLIENT001"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="tenants">
+            <column name="tenant_code" value="TENANT02"/>
+            <column name="name" value="Sample Tenant 2"/>
+            <column name="client_code" value="CLIENT002"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Insert roles for DEFAULT tenant (assuming tenant_id = 1) -->
+        <insert tableName="roles">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code" value="SYSTEM_ADMIN"/>
+            <column name="name" value="System Administrator"/>
+            <column name="description" value="Full system access with all permissions"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="roles">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code" value="SUPERVISOR"/>
+            <column name="name" value="Supervisor"/>
+            <column name="description" value="Supervisor role with management permissions"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="roles">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code" value="END_USER"/>
+            <column name="name" value="End User"/>
+            <column name="description" value="Standard end user with limited permissions"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Insert sample permissions for DEFAULT tenant -->
+        <insert tableName="permissions">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code" value="USER_CREATE"/>
+            <column name="name" value="Create User"/>
+            <column name="description" value="Permission to create new users"/>
+            <column name="resource_type" value="USER"/>
+            <column name="action" value="CREATE"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="permissions">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code" value="USER_READ"/>
+            <column name="name" value="Read User"/>
+            <column name="description" value="Permission to read user information"/>
+            <column name="resource_type" value="USER"/>
+            <column name="action" value="READ"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="permissions">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code" value="USER_UPDATE"/>
+            <column name="name" value="Update User"/>
+            <column name="description" value="Permission to update user information"/>
+            <column name="resource_type" value="USER"/>
+            <column name="action" value="UPDATE"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="permissions">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code" value="USER_DELETE"/>
+            <column name="name" value="Delete User"/>
+            <column name="description" value="Permission to delete users"/>
+            <column name="resource_type" value="USER"/>
+            <column name="action" value="DELETE"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="permissions">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code" value="ROLE_MANAGE"/>
+            <column name="name" value="Manage Roles"/>
+            <column name="description" value="Permission to manage roles"/>
+            <column name="resource_type" value="ROLE"/>
+            <column name="action" value="MANAGE"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="permissions">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code" value="PERMISSION_MANAGE"/>
+            <column name="name" value="Manage Permissions"/>
+            <column name="description" value="Permission to manage permissions"/>
+            <column name="resource_type" value="PERMISSION"/>
+            <column name="action" value="MANAGE"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- 
+            Note: Admin user password hash (BCrypt) for "Admin@123" 
+            This should be generated at runtime using PasswordEncoder.
+            For seed data, we'll insert it here, but in production,
+            consider using a data migration script or initialization service.
+            BCrypt hash for "Admin@123": $2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+        -->
+        <insert tableName="users">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="email" value="admin@example.com"/>
+            <column name="password_hash" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
+            <column name="first_name" value="Admin"/>
+            <column name="last_name" value="User"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Assign SYSTEM_ADMIN role to admin user (assuming user_id = 1, role_id = 1) -->
+        <insert tableName="user_roles">
+            <column name="user_id" valueNumeric="1"/>
+            <column name="role_id" valueNumeric="1"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Assign all permissions to SYSTEM_ADMIN role (assuming role_id = 1) -->
+        <insert tableName="role_permissions">
+            <column name="role_id" valueNumeric="1"/>
+            <column name="permission_id" valueNumeric="1"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="role_permissions">
+            <column name="role_id" valueNumeric="1"/>
+            <column name="permission_id" valueNumeric="2"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="role_permissions">
+            <column name="role_id" valueNumeric="1"/>
+            <column name="permission_id" valueNumeric="3"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="role_permissions">
+            <column name="role_id" valueNumeric="1"/>
+            <column name="permission_id" valueNumeric="4"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="role_permissions">
+            <column name="role_id" valueNumeric="1"/>
+            <column name="permission_id" valueNumeric="5"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="role_permissions">
+            <column name="role_id" valueNumeric="1"/>
+            <column name="permission_id" valueNumeric="6"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Assign some permissions to SUPERVISOR role (assuming role_id = 2) -->
+        <insert tableName="role_permissions">
+            <column name="role_id" valueNumeric="2"/>
+            <column name="permission_id" valueNumeric="1"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="role_permissions">
+            <column name="role_id" valueNumeric="2"/>
+            <column name="permission_id" valueNumeric="2"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="role_permissions">
+            <column name="role_id" valueNumeric="2"/>
+            <column name="permission_id" valueNumeric="3"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Assign read permission to END_USER role (assuming role_id = 3) -->
+        <insert tableName="role_permissions">
+            <column name="role_id" valueNumeric="3"/>
+            <column name="permission_id" valueNumeric="2"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+    </changeSet>
+
+</databaseChangeLog>
+

@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <!-- Seed sample projects, WBS, and tasks for DEFAULT tenant -->
+    <changeSet id="021-seed-sample-projects-wbs-tasks" author="projects-module">
+        <!-- Sample Project 1 -->
+        <insert tableName="projects">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="project_code" value="PROJ001"/>
+            <column name="project_name" value="Sample Construction Project"/>
+            <column name="description" value="Sample project for testing Projects → WBS → Tasks module"/>
+            <column name="start_date" valueDate="2024-01-01"/>
+            <column name="end_date" valueDate="2024-12-31"/>
+            <column name="status" value="ACTIVE"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Sample WBS 1 (Root) for Project 1 -->
+        <insert tableName="wbs">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="project_id" valueComputed="(SELECT project_id FROM projects WHERE project_code = 'PROJ001' AND tenant_id = 1)"/>
+            <column name="wbs_code" value="WBS001"/>
+            <column name="wbs_name" value="Foundation Work"/>
+            <column name="description" value="Root WBS for foundation activities"/>
+            <column name="start_date" valueDate="2024-01-01"/>
+            <column name="end_date" valueDate="2024-03-31"/>
+            <column name="level" valueNumeric="1"/>
+            <column name="work_center" value="WC001"/>
+            <column name="cost_center" value="CC001"/>
+            <column name="planned_qty" valueNumeric="1000.00"/>
+            <column name="actual_qty" valueNumeric="0.00"/>
+            <column name="status" value="PLANNED"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Sample WBS 2 (Child of WBS001) -->
+        <insert tableName="wbs">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="project_id" valueComputed="(SELECT project_id FROM projects WHERE project_code = 'PROJ001' AND tenant_id = 1)"/>
+            <column name="parent_wbs_id" valueComputed="(SELECT wbs_id FROM wbs WHERE wbs_code = 'WBS001' AND tenant_id = 1)"/>
+            <column name="wbs_code" value="WBS002"/>
+            <column name="wbs_name" value="Excavation"/>
+            <column name="description" value="Excavation work"/>
+            <column name="start_date" valueDate="2024-01-01"/>
+            <column name="end_date" valueDate="2024-02-28"/>
+            <column name="level" valueNumeric="2"/>
+            <column name="work_center" value="WC001"/>
+            <column name="cost_center" value="CC001"/>
+            <column name="planned_qty" valueNumeric="500.00"/>
+            <column name="actual_qty" valueNumeric="0.00"/>
+            <column name="status" value="PLANNED"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Sample Task 1 -->
+        <insert tableName="tasks">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="project_id" valueComputed="(SELECT project_id FROM projects WHERE project_code = 'PROJ001' AND tenant_id = 1)"/>
+            <column name="wbs_id" valueComputed="(SELECT wbs_id FROM wbs WHERE wbs_code = 'WBS002' AND tenant_id = 1)"/>
+            <column name="task_code" value="TASK001"/>
+            <column name="task_name" value="Site Preparation"/>
+            <column name="description" value="Prepare site for excavation"/>
+            <column name="start_date" valueDate="2024-01-01"/>
+            <column name="end_date" valueDate="2024-01-15"/>
+            <column name="planned_qty" valueNumeric="100.00"/>
+            <column name="actual_qty" valueNumeric="0.00"/>
+            <column name="unit" value="DAYS"/>
+            <column name="status" value="PLANNED"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Sample Task 2 -->
+        <insert tableName="tasks">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="project_id" valueComputed="(SELECT project_id FROM projects WHERE project_code = 'PROJ001' AND tenant_id = 1)"/>
+            <column name="wbs_id" valueComputed="(SELECT wbs_id FROM wbs WHERE wbs_code = 'WBS002' AND tenant_id = 1)"/>
+            <column name="task_code" value="TASK002"/>
+            <column name="task_name" value="Excavation Work"/>
+            <column name="description" value="Perform excavation"/>
+            <column name="start_date" valueDate="2024-01-16"/>
+            <column name="end_date" valueDate="2024-02-28"/>
+            <column name="planned_qty" valueNumeric="400.00"/>
+            <column name="actual_qty" valueNumeric="0.00"/>
+            <column name="unit" value="DAYS"/>
+            <column name="status" value="PLANNED"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Sample Project 2 -->
+        <insert tableName="projects">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="project_code" value="PROJ002"/>
+            <column name="project_name" value="Software Development Project"/>
+            <column name="description" value="Sample software development project"/>
+            <column name="start_date" valueDate="2024-02-01"/>
+            <column name="end_date" valueDate="2024-11-30"/>
+            <column name="status" value="ACTIVE"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Sample WBS 3 (Root for Project 2) -->
+        <insert tableName="wbs">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="project_id" valueComputed="(SELECT project_id FROM projects WHERE project_code = 'PROJ002' AND tenant_id = 1)"/>
+            <column name="wbs_code" value="WBS003"/>
+            <column name="wbs_name" value="Development Phase"/>
+            <column name="description" value="Root WBS for development"/>
+            <column name="start_date" valueDate="2024-02-01"/>
+            <column name="end_date" valueDate="2024-08-31"/>
+            <column name="level" valueNumeric="1"/>
+            <column name="work_center" value="WC002"/>
+            <column name="cost_center" value="CC002"/>
+            <column name="planned_qty" valueNumeric="2000.00"/>
+            <column name="actual_qty" valueNumeric="0.00"/>
+            <column name="status" value="PLANNED"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Sample Task 3 -->
+        <insert tableName="tasks">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="project_id" valueComputed="(SELECT project_id FROM projects WHERE project_code = 'PROJ002' AND tenant_id = 1)"/>
+            <column name="wbs_id" valueComputed="(SELECT wbs_id FROM wbs WHERE wbs_code = 'WBS003' AND tenant_id = 1)"/>
+            <column name="task_code" value="TASK003"/>
+            <column name="task_name" value="Backend Development"/>
+            <column name="description" value="Develop backend APIs"/>
+            <column name="start_date" valueDate="2024-02-01"/>
+            <column name="end_date" valueDate="2024-05-31"/>
+            <column name="planned_qty" valueNumeric="1200.00"/>
+            <column name="actual_qty" valueNumeric="0.00"/>
+            <column name="unit" value="HOURS"/>
+            <column name="status" value="PLANNED"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Sample Task 4 -->
+        <insert tableName="tasks">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="project_id" valueComputed="(SELECT project_id FROM projects WHERE project_code = 'PROJ002' AND tenant_id = 1)"/>
+            <column name="wbs_id" valueComputed="(SELECT wbs_id FROM wbs WHERE wbs_code = 'WBS003' AND tenant_id = 1)"/>
+            <column name="task_code" value="TASK004"/>
+            <column name="task_name" value="Frontend Development"/>
+            <column name="description" value="Develop frontend UI"/>
+            <column name="start_date" valueDate="2024-03-01"/>
+            <column name="end_date" valueDate="2024-08-31"/>
+            <column name="planned_qty" valueNumeric="800.00"/>
+            <column name="actual_qty" valueNumeric="0.00"/>
+            <column name="unit" value="HOURS"/>
+            <column name="status" value="PLANNED"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>
+
