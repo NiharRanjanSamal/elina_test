@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <!--
+        Add Master Data Management permissions for DEFAULT tenant (tenant_id = 1).
+        These permissions control access to the Master Data module.
+    -->
+
+    <changeSet id="013-add-master-data-permissions" author="master-data-module">
+        
+        <!-- PAGE_MASTER_DATA_VIEW permission -->
+        <insert tableName="permissions">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code" value="PAGE_MASTER_DATA_VIEW"/>
+            <column name="name" value="View Master Data"/>
+            <column name="description" value="Permission to view and read master data codes. Required for accessing the Master Data management page and viewing master codes."/>
+            <column name="resource_type" value="PAGE"/>
+            <column name="action" value="VIEW"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- PAGE_MASTER_DATA_EDIT permission -->
+        <insert tableName="permissions">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code" value="PAGE_MASTER_DATA_EDIT"/>
+            <column name="name" value="Edit Master Data"/>
+            <column name="description" value="Permission to create, update, and delete master data codes. Includes bulk upload capabilities. Required for write operations on master codes."/>
+            <column name="resource_type" value="PAGE"/>
+            <column name="action" value="EDIT"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Assign PAGE_MASTER_DATA_VIEW to SYSTEM_ADMIN role (assuming role_id = 1) -->
+        <!-- Note: Using SQL to get permission_id since valueComputed with subquery may not work in all Liquibase versions -->
+        <sql>
+            INSERT INTO role_permissions (role_id, permission_id, created_at)
+            SELECT 1, id, CURRENT_TIMESTAMP
+            FROM permissions
+            WHERE tenant_id = 1 AND code = 'PAGE_MASTER_DATA_VIEW'
+            AND NOT EXISTS (
+                SELECT 1 FROM role_permissions rp 
+                WHERE rp.role_id = 1 AND rp.permission_id = permissions.id
+            );
+        </sql>
+
+        <!-- Assign PAGE_MASTER_DATA_EDIT to SYSTEM_ADMIN role (assuming role_id = 1) -->
+        <sql>
+            INSERT INTO role_permissions (role_id, permission_id, created_at)
+            SELECT 1, id, CURRENT_TIMESTAMP
+            FROM permissions
+            WHERE tenant_id = 1 AND code = 'PAGE_MASTER_DATA_EDIT'
+            AND NOT EXISTS (
+                SELECT 1 FROM role_permissions rp 
+                WHERE rp.role_id = 1 AND rp.permission_id = permissions.id
+            );
+        </sql>
+
+        <!-- Also assign to SUPERVISOR role if it exists (assuming role_id = 2) -->
+        <!-- Uncomment if you want supervisors to have view access -->
+        <!--
+        <insert tableName="role_permissions">
+            <column name="role_id" valueNumeric="2"/>
+            <column name="permission_id" valueComputed="(SELECT id FROM permissions WHERE tenant_id = 1 AND code = 'PAGE_MASTER_DATA_VIEW')"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        -->
+
+    </changeSet>
+
+</databaseChangeLog>
+

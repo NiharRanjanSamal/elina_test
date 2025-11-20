@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <changeSet id="011-create-master-codes-table" author="master-data-module">
+        <createTable tableName="master_codes">
+            <column name="code_id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_master_codes_tenant" references="tenants(id)"/>
+            </column>
+            <column name="code_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="code_value" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="short_description" type="VARCHAR(500)"/>
+            <column name="long_description" type="NVARCHAR(MAX)"/>
+            <column name="activate_flag" type="BIT" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="BIGINT"/>
+            <column name="created_on" type="DATETIME2" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_by" type="BIGINT"/>
+            <column name="updated_on" type="DATETIME2"/>
+        </createTable>
+
+        <!-- Unique constraint: tenant_id, code_type, code_value -->
+        <addUniqueConstraint
+                tableName="master_codes"
+                columnNames="tenant_id,code_type,code_value"
+                constraintName="UQ_master_codes_tenant_type_value"/>
+
+        <!-- Indexes for performance -->
+        <createIndex indexName="idx_master_codes_tenant_type" tableName="master_codes">
+            <column name="tenant_id"/>
+            <column name="code_type"/>
+        </createIndex>
+
+        <createIndex indexName="idx_master_codes_tenant_type_active" tableName="master_codes">
+            <column name="tenant_id"/>
+            <column name="code_type"/>
+            <column name="activate_flag"/>
+        </createIndex>
+
+        <createIndex indexName="idx_master_codes_code_type" tableName="master_codes">
+            <column name="code_type"/>
+        </createIndex>
+
+        <createIndex indexName="idx_master_codes_created_by" tableName="master_codes">
+            <column name="created_by"/>
+        </createIndex>
+
+        <createIndex indexName="idx_master_codes_updated_by" tableName="master_codes">
+            <column name="updated_by"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+

@@ -1,0 +1,483 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <!--
+        Seed data for master codes module.
+        Creates sample master codes for various code types for the DEFAULT tenant (tenant_id = 1).
+    -->
+
+    <changeSet id="012-seed-master-codes" author="master-data-module">
+        
+        <!-- WORK_CENTER codes -->
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="WORK_CENTER"/>
+            <column name="code_value" value="WC_SITE"/>
+            <column name="short_description" value="Site Work Center"/>
+            <column name="long_description" value="Primary work center for site operations and field work activities. Used for tracking site-based work assignments and resource allocation."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="WORK_CENTER"/>
+            <column name="code_value" value="WC_FOUND"/>
+            <column name="short_description" value="Foundation Work Center"/>
+            <column name="long_description" value="Work center dedicated to foundation and structural work. Handles all foundation-related activities including excavation, concrete work, and structural installations."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="WORK_CENTER"/>
+            <column name="code_value" value="WC_FINISH"/>
+            <column name="short_description" value="Finishing Work Center"/>
+            <column name="long_description" value="Work center for finishing activities including painting, flooring, fixtures, and final touches. Manages completion phase of projects."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- COST_CENTER codes -->
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="COST_CENTER"/>
+            <column name="code_value" value="CC_001"/>
+            <column name="short_description" value="Cost Center 001"/>
+            <column name="long_description" value="Primary cost center for general operations and administrative expenses. Used for budget tracking and financial reporting."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="COST_CENTER"/>
+            <column name="code_value" value="CC_002"/>
+            <column name="short_description" value="Cost Center 002"/>
+            <column name="long_description" value="Secondary cost center for project-specific expenses. Tracks costs related to active projects and initiatives."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="COST_CENTER"/>
+            <column name="code_value" value="CC_003"/>
+            <column name="short_description" value="Cost Center 003"/>
+            <column name="long_description" value="Cost center for maintenance and support activities. Handles ongoing maintenance costs and support operations."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="COST_CENTER"/>
+            <column name="code_value" value="CC_004"/>
+            <column name="short_description" value="Cost Center 004"/>
+            <column name="long_description" value="Cost center for research and development. Tracks R&amp;D expenses and innovation initiatives."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="COST_CENTER"/>
+            <column name="code_value" value="CC_005"/>
+            <column name="short_description" value="Cost Center 005"/>
+            <column name="long_description" value="Cost center for quality assurance and testing. Manages QA-related costs and testing activities."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- ROLE_TYPES -->
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="ROLE_TYPES"/>
+            <column name="code_value" value="SYSTEM_ADMIN"/>
+            <column name="short_description" value="System Administrator"/>
+            <column name="long_description" value="Full system access with administrative privileges. Can manage users, roles, permissions, and system configuration."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="ROLE_TYPES"/>
+            <column name="code_value" value="SUPERVISOR"/>
+            <column name="short_description" value="Supervisor Role"/>
+            <column name="long_description" value="Supervisory role with oversight capabilities. Can manage team members, review work, and approve workflows."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="ROLE_TYPES"/>
+            <column name="code_value" value="END_USER"/>
+            <column name="short_description" value="End User"/>
+            <column name="long_description" value="Standard user role with basic access. Can perform assigned tasks and view relevant information."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- WBS_STATUS codes -->
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="WBS_STATUS"/>
+            <column name="code_value" value="NOT_STARTED"/>
+            <column name="short_description" value="Not Started"/>
+            <column name="long_description" value="Work breakdown structure item has been created but work has not yet begun. Ready for assignment and scheduling."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="WBS_STATUS"/>
+            <column name="code_value" value="IN_PROGRESS"/>
+            <column name="short_description" value="In Progress"/>
+            <column name="long_description" value="Work breakdown structure item is currently being worked on. Active work is in progress with assigned resources."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="WBS_STATUS"/>
+            <column name="code_value" value="COMPLETED"/>
+            <column name="short_description" value="Completed"/>
+            <column name="long_description" value="Work breakdown structure item has been finished and completed. All work is done and verified."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="WBS_STATUS"/>
+            <column name="code_value" value="ON_HOLD"/>
+            <column name="short_description" value="On Hold"/>
+            <column name="long_description" value="Work breakdown structure item is temporarily paused. Work is suspended pending resolution of blockers or dependencies."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="WBS_STATUS"/>
+            <column name="code_value" value="CANCELLED"/>
+            <column name="short_description" value="Cancelled"/>
+            <column name="long_description" value="Work breakdown structure item has been cancelled. Work will not proceed and item is closed."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- REVIEW_FREQUENCY codes -->
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="REVIEW_FREQUENCY"/>
+            <column name="code_value" value="DAILY"/>
+            <column name="short_description" value="Daily Review"/>
+            <column name="long_description" value="Items requiring daily review and status updates. Used for critical or time-sensitive activities."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="REVIEW_FREQUENCY"/>
+            <column name="code_value" value="WEEKLY"/>
+            <column name="short_description" value="Weekly Review"/>
+            <column name="long_description" value="Items reviewed on a weekly basis. Standard frequency for most ongoing activities and projects."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="REVIEW_FREQUENCY"/>
+            <column name="code_value" value="FORTNIGHT"/>
+            <column name="short_description" value="Fortnightly Review"/>
+            <column name="long_description" value="Items reviewed every two weeks. Used for less critical activities or longer-term projects."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="REVIEW_FREQUENCY"/>
+            <column name="code_value" value="MONTHLY"/>
+            <column name="short_description" value="Monthly Review"/>
+            <column name="long_description" value="Items reviewed monthly. Used for strategic initiatives and long-term planning activities."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="REVIEW_FREQUENCY"/>
+            <column name="code_value" value="QUARTERLY"/>
+            <column name="short_description" value="Quarterly Review"/>
+            <column name="long_description" value="Items reviewed quarterly. Used for high-level strategic reviews and annual planning cycles."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- TASK_PRIORITY codes -->
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="TASK_PRIORITY"/>
+            <column name="code_value" value="CRITICAL"/>
+            <column name="short_description" value="Critical Priority"/>
+            <column name="long_description" value="Highest priority tasks requiring immediate attention. These tasks block other work or have severe business impact if delayed."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="TASK_PRIORITY"/>
+            <column name="code_value" value="HIGH"/>
+            <column name="short_description" value="High Priority"/>
+            <column name="long_description" value="High priority tasks that should be completed soon. Important for project success but not immediately blocking."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="TASK_PRIORITY"/>
+            <column name="code_value" value="MEDIUM"/>
+            <column name="short_description" value="Medium Priority"/>
+            <column name="long_description" value="Standard priority tasks with normal scheduling. Completed as part of regular workflow."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="TASK_PRIORITY"/>
+            <column name="code_value" value="LOW"/>
+            <column name="short_description" value="Low Priority"/>
+            <column name="long_description" value="Lower priority tasks that can be deferred if needed. Nice to have but not critical for immediate goals."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- PROJECT_TYPE codes -->
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="PROJECT_TYPE"/>
+            <column name="code_value" value="CONSTRUCTION"/>
+            <column name="short_description" value="Construction Project"/>
+            <column name="long_description" value="Construction and building projects including new builds, renovations, and infrastructure development."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="PROJECT_TYPE"/>
+            <column name="code_value" value="MAINTENANCE"/>
+            <column name="short_description" value="Maintenance Project"/>
+            <column name="long_description" value="Maintenance and repair projects for existing facilities and infrastructure."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="PROJECT_TYPE"/>
+            <column name="code_value" value="RENOVATION"/>
+            <column name="short_description" value="Renovation Project"/>
+            <column name="long_description" value="Renovation and upgrade projects for existing structures and facilities."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="PROJECT_TYPE"/>
+            <column name="code_value" value="PLANNING"/>
+            <column name="short_description" value="Planning Project"/>
+            <column name="long_description" value="Planning and design projects including feasibility studies and design development."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- RESOURCE_TYPE codes -->
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="RESOURCE_TYPE"/>
+            <column name="code_value" value="LABOR"/>
+            <column name="short_description" value="Labor Resource"/>
+            <column name="long_description" value="Human resources including workers, technicians, and skilled labor. Tracks labor hours and costs."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="RESOURCE_TYPE"/>
+            <column name="code_value" value="EQUIPMENT"/>
+            <column name="short_description" value="Equipment Resource"/>
+            <column name="long_description" value="Equipment and machinery resources including tools, vehicles, and heavy machinery. Tracks equipment usage and rental costs."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="RESOURCE_TYPE"/>
+            <column name="code_value" value="MATERIAL"/>
+            <column name="short_description" value="Material Resource"/>
+            <column name="long_description" value="Material resources including raw materials, supplies, and consumables. Tracks material costs and inventory."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="RESOURCE_TYPE"/>
+            <column name="code_value" value="SERVICE"/>
+            <column name="short_description" value="Service Resource"/>
+            <column name="long_description" value="Service resources including subcontractors, consultants, and external services. Tracks service costs and contracts."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- ALLOCATION_STATUS codes -->
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="ALLOCATION_STATUS"/>
+            <column name="code_value" value="PLANNED"/>
+            <column name="short_description" value="Planned Allocation"/>
+            <column name="long_description" value="Resource allocation that has been planned but not yet confirmed. Pending approval or scheduling."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="ALLOCATION_STATUS"/>
+            <column name="code_value" value="CONFIRMED"/>
+            <column name="short_description" value="Confirmed Allocation"/>
+            <column name="long_description" value="Resource allocation that has been confirmed and scheduled. Resources are committed to the allocation."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="ALLOCATION_STATUS"/>
+            <column name="code_value" value="ACTIVE"/>
+            <column name="short_description" value="Active Allocation"/>
+            <column name="long_description" value="Resource allocation that is currently active. Resources are being used for the allocated work."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="ALLOCATION_STATUS"/>
+            <column name="code_value" value="COMPLETED"/>
+            <column name="short_description" value="Completed Allocation"/>
+            <column name="long_description" value="Resource allocation that has been completed. Work is finished and resources are released."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="master_codes">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code_type" value="ALLOCATION_STATUS"/>
+            <column name="code_value" value="CANCELLED"/>
+            <column name="short_description" value="Cancelled Allocation"/>
+            <column name="long_description" value="Resource allocation that has been cancelled. Resources were not used or allocation was revoked."/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+    </changeSet>
+
+</databaseChangeLog>
+

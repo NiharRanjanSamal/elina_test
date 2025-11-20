@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <changeSet id="014-create-business-rules-table" author="business-rule-module">
+        <createTable tableName="business_rules">
+            <column name="rule_id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_business_rules_tenant" references="tenants(id)"/>
+            </column>
+            <column name="rule_number" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="control_point" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="applicability" type="VARCHAR(1)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rule_value" type="VARCHAR(500)"/>
+            <column name="description" type="VARCHAR(1000)"/>
+            <column name="activate_flag" type="BIT" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="BIGINT"/>
+            <column name="created_on" type="DATETIME2" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_by" type="BIGINT"/>
+            <column name="updated_on" type="DATETIME2"/>
+        </createTable>
+
+        <!-- Unique constraint: tenant_id, rule_number -->
+        <addUniqueConstraint
+                tableName="business_rules"
+                columnNames="tenant_id,rule_number"
+                constraintName="UQ_business_rules_tenant_rule_number"/>
+
+        <!-- Indexes for performance -->
+        <createIndex indexName="idx_business_rules_tenant_rule_number" tableName="business_rules" unique="true">
+            <column name="tenant_id"/>
+            <column name="rule_number"/>
+        </createIndex>
+
+        <createIndex indexName="idx_business_rules_tenant_control_point" tableName="business_rules">
+            <column name="tenant_id"/>
+            <column name="control_point"/>
+        </createIndex>
+
+        <createIndex indexName="idx_business_rules_tenant_active" tableName="business_rules">
+            <column name="tenant_id"/>
+            <column name="activate_flag"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+

@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <!-- Update plan_versions table: Rename columns to match requirements -->
+    <changeSet id="022-rename-plan-versions-columns" author="projects-module">
+        <comment>Rename plan_versions columns to match schema requirements</comment>
+        
+        <!-- Rename version_id to plan_version_id -->
+        <renameColumn tableName="plan_versions" oldColumnName="version_id" newColumnName="plan_version_id" columnDataType="BIGINT"/>
+        
+        <!-- Rename version_number to version_no -->
+        <renameColumn tableName="plan_versions" oldColumnName="version_number" newColumnName="version_no" columnDataType="INT"/>
+        
+        <!-- Rename is_current to is_active -->
+        <renameColumn tableName="plan_versions" oldColumnName="is_current" newColumnName="is_active" columnDataType="BIT"/>
+    </changeSet>
+
+    <!-- Update plan_lines table: Rename columns to match requirements -->
+    <changeSet id="022-rename-plan-lines-columns" author="projects-module">
+        <comment>Rename plan_lines columns to match schema requirements</comment>
+        
+        <!-- Rename line_id to plan_line_id -->
+        <renameColumn tableName="plan_lines" oldColumnName="line_id" newColumnName="plan_line_id" columnDataType="BIGINT"/>
+        
+        <!-- Rename planned_date to work_date -->
+        <renameColumn tableName="plan_lines" oldColumnName="planned_date" newColumnName="work_date" columnDataType="DATE"/>
+        
+        <!-- Rename version_id reference to plan_version_id -->
+        <renameColumn tableName="plan_lines" oldColumnName="version_id" newColumnName="plan_version_id" columnDataType="BIGINT"/>
+    </changeSet>
+
+    <!-- Update foreign key constraint for plan_lines -->
+    <changeSet id="022-update-plan-lines-fk" author="projects-module">
+        <dropForeignKeyConstraint baseTableName="plan_lines" constraintName="fk_plan_lines_version"/>
+        <addForeignKeyConstraint
+                baseTableName="plan_lines"
+                baseColumnNames="plan_version_id"
+                constraintName="fk_plan_lines_version"
+                referencedTableName="plan_versions"
+                referencedColumnNames="plan_version_id"/>
+    </changeSet>
+
+    <!-- Add unique constraints -->
+    <changeSet id="022-add-plan-unique-constraints" author="projects-module">
+        <comment>Add unique constraints as per requirements</comment>
+        
+        <!-- Unique constraint: (task_id, version_no) -->
+        <addUniqueConstraint
+                tableName="plan_versions"
+                columnNames="task_id, version_no"
+                constraintName="uk_plan_versions_task_version"/>
+        
+        <!-- Unique constraint: (plan_version_id, work_date) -->
+        <addUniqueConstraint
+                tableName="plan_lines"
+                columnNames="plan_version_id, work_date"
+                constraintName="uk_plan_lines_version_date"/>
+    </changeSet>
+
+    <!-- Update indexes to match new column names -->
+    <changeSet id="022-update-plan-indexes" author="projects-module">
+        <comment>Update indexes to use new column names</comment>
+        
+        <!-- Drop old indexes -->
+        <dropIndex tableName="plan_versions" indexName="idx_plan_versions_task_id"/>
+        <dropIndex tableName="plan_lines" indexName="idx_plan_lines_version_id"/>
+        
+        <!-- Add updated indexes -->
+        <createIndex indexName="idx_plan_versions_tenant_task_version" tableName="plan_versions">
+            <column name="tenant_id"/>
+            <column name="task_id"/>
+            <column name="version_no"/>
+        </createIndex>
+        
+        <createIndex indexName="idx_plan_lines_version_work_date" tableName="plan_lines">
+            <column name="plan_version_id"/>
+            <column name="work_date"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Audit trigger for plan_versions table -->
+    <changeSet id="022-create-plan-versions-audit-trigger" author="projects-module">
+        <sql>
+            IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'trg_plan_version_audit')
+                DROP TRIGGER trg_plan_version_audit
+        </sql>
+        <sql>
+            CREATE TRIGGER trg_plan_version_audit
+            ON plan_versions
+            AFTER INSERT, UPDATE, DELETE
+            AS
+            BEGIN
+                SET NOCOUNT ON;
+
+                DECLARE @user_id BIGINT = dbo.fn_get_current_user_id();
+                DECLARE @action_type VARCHAR(20);
+                DECLARE @plan_version_id BIGINT;
+                DECLARE @tenant_id BIGINT;
+                DECLARE @old_data NVARCHAR(MAX);
+                DECLARE @new_data NVARCHAR(MAX);
+
+                -- Handle INSERT
+                IF EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted)
+                BEGIN
+                    SET @action_type = 'INSERT';
+                    SELECT @plan_version_id = plan_version_id, @tenant_id = tenant_id FROM inserted;
+                    
+                    SELECT @new_data = (
+                        SELECT task_id, version_no, version_date, description, is_active, activate_flag
+                        FROM inserted
+                        FOR JSON AUTO
+                    );
+
+                    INSERT INTO audit_logs (tenant_id, table_name, record_id, action_type, new_data, changed_by, changed_on)
+                    VALUES (@tenant_id, 'PLAN_VERSION', @plan_version_id, @action_type, @new_data, @user_id, GETDATE());
+                END
+
+                -- Handle UPDATE
+                IF EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted)
+                BEGIN
+                    SET @action_type = 'UPDATE';
+                    SELECT @plan_version_id = plan_version_id, @tenant_id = tenant_id FROM inserted;
+                    
+                    SELECT @old_data = (
+                        SELECT task_id, version_no, version_date, description, is_active, activate_flag
+                        FROM deleted
+                        FOR JSON AUTO
+                    );
+
+                    SELECT @new_data = (
+                        SELECT task_id, version_no, version_date, description, is_active, activate_flag
+                        FROM inserted
+                        FOR JSON AUTO
+                    );
+
+                    INSERT INTO audit_logs (tenant_id, table_name, record_id, action_type, old_data, new_data, changed_by, changed_on)
+                    VALUES (@tenant_id, 'PLAN_VERSION', @plan_version_id, @action_type, @old_data, @new_data, @user_id, GETDATE());
+                END
+
+                -- Handle DELETE
+                IF NOT EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted)
+                BEGIN
+                    SET @action_type = 'DELETE';
+                    SELECT @plan_version_id = plan_version_id, @tenant_id = tenant_id FROM deleted;
+                    
+                    SELECT @old_data = (
+                        SELECT task_id, version_no, version_date, description, is_active, activate_flag
+                        FROM deleted
+                        FOR JSON AUTO
+                    );
+
+                    INSERT INTO audit_logs (tenant_id, table_name, record_id, action_type, old_data, changed_by, changed_on)
+                    VALUES (@tenant_id, 'PLAN_VERSION', @plan_version_id, @action_type, @old_data, @user_id, GETDATE());
+                END
+            END
+        </sql>
+    </changeSet>
+
+    <!-- Audit trigger for plan_lines table -->
+    <changeSet id="022-create-plan-lines-audit-trigger" author="projects-module">
+        <sql>
+            IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'trg_plan_line_audit')
+                DROP TRIGGER trg_plan_line_audit
+        </sql>
+        <sql>
+            CREATE TRIGGER trg_plan_line_audit
+            ON plan_lines
+            AFTER INSERT, UPDATE, DELETE
+            AS
+            BEGIN
+                SET NOCOUNT ON;
+
+                DECLARE @user_id BIGINT = dbo.fn_get_current_user_id();
+                DECLARE @action_type VARCHAR(20);
+                DECLARE @plan_line_id BIGINT;
+                DECLARE @tenant_id BIGINT;
+                DECLARE @old_data NVARCHAR(MAX);
+                DECLARE @new_data NVARCHAR(MAX);
+
+                -- Handle INSERT
+                IF EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted)
+                BEGIN
+                    SET @action_type = 'INSERT';
+                    SELECT @plan_line_id = plan_line_id, @tenant_id = tenant_id FROM inserted;
+                    
+                    SELECT @new_data = (
+                        SELECT plan_version_id, task_id, line_number, work_date, planned_qty, description, activate_flag
+                        FROM inserted
+                        FOR JSON AUTO
+                    );
+
+                    INSERT INTO audit_logs (tenant_id, table_name, record_id, action_type, new_data, changed_by, changed_on)
+                    VALUES (@tenant_id, 'PLAN_LINES', @plan_line_id, @action_type, @new_data, @user_id, GETDATE());
+                END
+
+                -- Handle UPDATE
+                IF EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted)
+                BEGIN
+                    SET @action_type = 'UPDATE';
+                    SELECT @plan_line_id = plan_line_id, @tenant_id = tenant_id FROM inserted;
+                    
+                    SELECT @old_data = (
+                        SELECT plan_version_id, task_id, line_number, work_date, planned_qty, description, activate_flag
+                        FROM deleted
+                        FOR JSON AUTO
+                    );
+
+                    SELECT @new_data = (
+                        SELECT plan_version_id, task_id, line_number, work_date, planned_qty, description, activate_flag
+                        FROM inserted
+                        FOR JSON AUTO
+                    );
+
+                    INSERT INTO audit_logs (tenant_id, table_name, record_id, action_type, old_data, new_data, changed_by, changed_on)
+                    VALUES (@tenant_id, 'PLAN_LINES', @plan_line_id, @action_type, @old_data, @new_data, @user_id, GETDATE());
+                END
+
+                -- Handle DELETE
+                IF NOT EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted)
+                BEGIN
+                    SET @action_type = 'DELETE';
+                    SELECT @plan_line_id = plan_line_id, @tenant_id = tenant_id FROM deleted;
+                    
+                    SELECT @old_data = (
+                        SELECT plan_version_id, task_id, line_number, work_date, planned_qty, description, activate_flag
+                        FROM deleted
+                        FOR JSON AUTO
+                    );
+
+                    INSERT INTO audit_logs (tenant_id, table_name, record_id, action_type, old_data, changed_by, changed_on)
+                    VALUES (@tenant_id, 'PLAN_LINES', @plan_line_id, @action_type, @old_data, @user_id, GETDATE());
+                END
+            END
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
+

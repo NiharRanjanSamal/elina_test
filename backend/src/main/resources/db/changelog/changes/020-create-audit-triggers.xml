@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <!-- Audit trigger helper function to get current user ID from session -->
+    <changeSet id="020-create-audit-helper-function" author="projects-module">
+        <sql>
+            -- Helper function to get current user ID from session context
+            -- This should be set by the application before executing queries
+            IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[fn_get_current_user_id]') AND type in (N'FN', N'IF', N'TF', N'FS', N'FT'))
+            BEGIN
+                EXEC dbo.sp_executesql @statement = N'
+                CREATE FUNCTION [dbo].[fn_get_current_user_id]()
+                RETURNS BIGINT
+                AS
+                BEGIN
+                    DECLARE @user_id BIGINT
+                    SET @user_id = CAST(SESSION_CONTEXT(N''user_id'') AS BIGINT)
+                    RETURN ISNULL(@user_id, 0)
+                END
+                '
+            END
+        </sql>
+    </changeSet>
+
+    <!-- Audit trigger for projects table -->
+    <changeSet id="020-create-projects-audit-trigger" author="projects-module">
+        <sql>
+            IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'trg_projects_audit')
+                DROP TRIGGER trg_projects_audit
+        </sql>
+        <sql>
+            CREATE TRIGGER trg_projects_audit
+            ON projects
+            AFTER INSERT, UPDATE, DELETE
+            AS
+            BEGIN
+                SET NOCOUNT ON;
+
+                DECLARE @user_id BIGINT = dbo.fn_get_current_user_id();
+                DECLARE @action_type VARCHAR(20);
+                DECLARE @project_id BIGINT;
+                DECLARE @tenant_id BIGINT;
+                DECLARE @old_data NVARCHAR(MAX);
+                DECLARE @new_data NVARCHAR(MAX);
+
+                -- Handle INSERT
+                IF EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted)
+                BEGIN
+                    SET @action_type = 'INSERT';
+                    SELECT @project_id = project_id, @tenant_id = tenant_id FROM inserted;
+                    
+                    SELECT @new_data = (
+                        SELECT project_code, project_name, start_date, end_date, status, activate_flag
+                        FROM inserted
+                        FOR JSON AUTO
+                    );
+
+                    INSERT INTO audit_logs (tenant_id, table_name, record_id, action_type, new_data, changed_by, changed_on)
+                    VALUES (@tenant_id, 'projects', @project_id, @action_type, @new_data, @user_id, GETDATE());
+                END
+
+                -- Handle UPDATE
+                IF EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted)
+                BEGIN
+                    SET @action_type = 'UPDATE';
+                    SELECT @project_id = project_id, @tenant_id = tenant_id FROM inserted;
+                    
+                    SELECT @old_data = (
+                        SELECT project_code, project_name, start_date, end_date, status, activate_flag
+                        FROM deleted
+                        FOR JSON AUTO
+                    );
+
+                    SELECT @new_data = (
+                        SELECT project_code, project_name, start_date, end_date, status, activate_flag
+                        FROM inserted
+                        FOR JSON AUTO
+                    );
+
+                    INSERT INTO audit_logs (tenant_id, table_name, record_id, action_type, old_data, new_data, changed_by, changed_on)
+                    VALUES (@tenant_id, 'projects', @project_id, @action_type, @old_data, @new_data, @user_id, GETDATE());
+                END
+
+                -- Handle DELETE
+                IF NOT EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted)
+                BEGIN
+                    SET @action_type = 'DELETE';
+                    SELECT @project_id = project_id, @tenant_id = tenant_id FROM deleted;
+                    
+                    SELECT @old_data = (
+                        SELECT project_code, project_name, start_date, end_date, status, activate_flag
+                        FROM deleted
+                        FOR JSON AUTO
+                    );
+
+                    INSERT INTO audit_logs (tenant_id, table_name, record_id, action_type, old_data, changed_by, changed_on)
+                    VALUES (@tenant_id, 'projects', @project_id, @action_type, @old_data, @user_id, GETDATE());
+                END
+            END
+        </sql>
+    </changeSet>
+
+    <!-- Audit trigger for wbs table -->
+    <changeSet id="020-create-wbs-audit-trigger" author="projects-module">
+        <sql>
+            IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'trg_wbs_audit')
+                DROP TRIGGER trg_wbs_audit
+        </sql>
+        <sql>
+            CREATE TRIGGER trg_wbs_audit
+            ON wbs
+            AFTER INSERT, UPDATE, DELETE
+            AS
+            BEGIN
+                SET NOCOUNT ON;
+
+                DECLARE @user_id BIGINT = dbo.fn_get_current_user_id();
+                DECLARE @action_type VARCHAR(20);
+                DECLARE @wbs_id BIGINT;
+                DECLARE @tenant_id BIGINT;
+                DECLARE @old_data NVARCHAR(MAX);
+                DECLARE @new_data NVARCHAR(MAX);
+
+                -- Handle INSERT
+                IF EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted)
+                BEGIN
+                    SET @action_type = 'INSERT';
+                    SELECT @wbs_id = wbs_id, @tenant_id = tenant_id FROM inserted;
+                    
+                    SELECT @new_data = (
+                        SELECT wbs_code, wbs_name, start_date, end_date, status, activate_flag
+                        FROM inserted
+                        FOR JSON AUTO
+                    );
+
+                    INSERT INTO audit_logs (tenant_id, table_name, record_id, action_type, new_data, changed_by, changed_on)
+                    VALUES (@tenant_id, 'wbs', @wbs_id, @action_type, @new_data, @user_id, GETDATE());
+                END
+
+                -- Handle UPDATE
+                IF EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted)
+                BEGIN
+                    SET @action_type = 'UPDATE';
+                    SELECT @wbs_id = wbs_id, @tenant_id = tenant_id FROM inserted;
+                    
+                    SELECT @old_data = (
+                        SELECT wbs_code, wbs_name, start_date, end_date, status, activate_flag
+                        FROM deleted
+                        FOR JSON AUTO
+                    );
+
+                    SELECT @new_data = (
+                        SELECT wbs_code, wbs_name, start_date, end_date, status, activate_flag
+                        FROM inserted
+                        FOR JSON AUTO
+                    );
+
+                    INSERT INTO audit_logs (tenant_id, table_name, record_id, action_type, old_data, new_data, changed_by, changed_on)
+                    VALUES (@tenant_id, 'wbs', @wbs_id, @action_type, @old_data, @new_data, @user_id, GETDATE());
+                END
+
+                -- Handle DELETE
+                IF NOT EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted)
+                BEGIN
+                    SET @action_type = 'DELETE';
+                    SELECT @wbs_id = wbs_id, @tenant_id = tenant_id FROM deleted;
+                    
+                    SELECT @old_data = (
+                        SELECT wbs_code, wbs_name, start_date, end_date, status, activate_flag
+                        FROM deleted
+                        FOR JSON AUTO
+                    );
+
+                    INSERT INTO audit_logs (tenant_id, table_name, record_id, action_type, old_data, changed_by, changed_on)
+                    VALUES (@tenant_id, 'wbs', @wbs_id, @action_type, @old_data, @user_id, GETDATE());
+                END
+            END
+        </sql>
+    </changeSet>
+
+    <!-- Audit trigger for tasks table -->
+    <changeSet id="020-create-tasks-audit-trigger" author="projects-module">
+        <sql>
+            IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'trg_tasks_audit')
+                DROP TRIGGER trg_tasks_audit
+        </sql>
+        <sql>
+            CREATE TRIGGER trg_tasks_audit
+            ON tasks
+            AFTER INSERT, UPDATE, DELETE
+            AS
+            BEGIN
+                SET NOCOUNT ON;
+
+                DECLARE @user_id BIGINT = dbo.fn_get_current_user_id();
+                DECLARE @action_type VARCHAR(20);
+                DECLARE @task_id BIGINT;
+                DECLARE @tenant_id BIGINT;
+                DECLARE @old_data NVARCHAR(MAX);
+                DECLARE @new_data NVARCHAR(MAX);
+
+                -- Handle INSERT
+                IF EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted)
+                BEGIN
+                    SET @action_type = 'INSERT';
+                    SELECT @task_id = task_id, @tenant_id = tenant_id FROM inserted;
+                    
+                    SELECT @new_data = (
+                        SELECT task_code, task_name, start_date, end_date, planned_qty, status, activate_flag
+                        FROM inserted
+                        FOR JSON AUTO
+                    );
+
+                    INSERT INTO audit_logs (tenant_id, table_name, record_id, action_type, new_data, changed_by, changed_on)
+                    VALUES (@tenant_id, 'tasks', @task_id, @action_type, @new_data, @user_id, GETDATE());
+                END
+
+                -- Handle UPDATE
+                IF EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted)
+                BEGIN
+                    SET @action_type = 'UPDATE';
+                    SELECT @task_id = task_id, @tenant_id = tenant_id FROM inserted;
+                    
+                    SELECT @old_data = (
+                        SELECT task_code, task_name, start_date, end_date, planned_qty, status, activate_flag
+                        FROM deleted
+                        FOR JSON AUTO
+                    );
+
+                    SELECT @new_data = (
+                        SELECT task_code, task_name, start_date, end_date, planned_qty, status, activate_flag
+                        FROM inserted
+                        FOR JSON AUTO
+                    );
+
+                    INSERT INTO audit_logs (tenant_id, table_name, record_id, action_type, old_data, new_data, changed_by, changed_on)
+                    VALUES (@tenant_id, 'tasks', @task_id, @action_type, @old_data, @new_data, @user_id, GETDATE());
+                END
+
+                -- Handle DELETE
+                IF NOT EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted)
+                BEGIN
+                    SET @action_type = 'DELETE';
+                    SELECT @task_id = task_id, @tenant_id = tenant_id FROM deleted;
+                    
+                    SELECT @old_data = (
+                        SELECT task_code, task_name, start_date, end_date, planned_qty, status, activate_flag
+                        FROM deleted
+                        FOR JSON AUTO
+                    );
+
+                    INSERT INTO audit_logs (tenant_id, table_name, record_id, action_type, old_data, changed_by, changed_on)
+                    VALUES (@tenant_id, 'tasks', @task_id, @action_type, @old_data, @user_id, GETDATE());
+                END
+            END
+        </sql>
+    </changeSet>
+
+    <!-- Audit trigger for confirmations table (INSERT only) -->
+    <changeSet id="020-create-confirmations-audit-trigger" author="projects-module">
+        <sql>
+            IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'trg_confirmations_audit')
+                DROP TRIGGER trg_confirmations_audit
+        </sql>
+        <sql>
+            CREATE TRIGGER trg_confirmations_audit
+            ON confirmations
+            AFTER INSERT
+            AS
+            BEGIN
+                SET NOCOUNT ON;
+
+                DECLARE @user_id BIGINT = dbo.fn_get_current_user_id();
+                DECLARE @confirmation_id BIGINT;
+                DECLARE @tenant_id BIGINT;
+                DECLARE @new_data NVARCHAR(MAX);
+
+                SELECT @confirmation_id = confirmation_id, @tenant_id = tenant_id FROM inserted;
+                
+                SELECT @new_data = (
+                    SELECT entity_type, entity_id, confirmation_date, confirmed_by
+                    FROM inserted
+                    FOR JSON AUTO
+                );
+
+                INSERT INTO audit_logs (tenant_id, table_name, record_id, action_type, new_data, changed_by, changed_on)
+                VALUES (@tenant_id, 'confirmations', @confirmation_id, 'INSERT', @new_data, @user_id, GETDATE());
+            END
+        </sql>
+    </changeSet>
+
+    <!-- Audit trigger for task_updates table -->
+    <changeSet id="020-create-task-updates-audit-trigger" author="projects-module">
+        <sql>
+            IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'trg_task_updates_audit')
+                DROP TRIGGER trg_task_updates_audit
+        </sql>
+        <sql>
+            CREATE TRIGGER trg_task_updates_audit
+            ON task_updates
+            AFTER INSERT, UPDATE
+            AS
+            BEGIN
+                SET NOCOUNT ON;
+
+                DECLARE @user_id BIGINT = dbo.fn_get_current_user_id();
+                DECLARE @action_type VARCHAR(20);
+                DECLARE @update_id BIGINT;
+                DECLARE @tenant_id BIGINT;
+                DECLARE @old_data NVARCHAR(MAX);
+                DECLARE @new_data NVARCHAR(MAX);
+
+                -- Handle INSERT
+                IF EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted)
+                BEGIN
+                    SET @action_type = 'INSERT';
+                    SELECT @update_id = update_id, @tenant_id = tenant_id FROM inserted;
+                    
+                    SELECT @new_data = (
+                        SELECT task_id, update_date, actual_qty, daily_update_qty
+                        FROM inserted
+                        FOR JSON AUTO
+                    );
+
+                    INSERT INTO audit_logs (tenant_id, table_name, record_id, action_type, new_data, changed_by, changed_on)
+                    VALUES (@tenant_id, 'task_updates', @update_id, @action_type, @new_data, @user_id, GETDATE());
+                END
+
+                -- Handle UPDATE
+                IF EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted)
+                BEGIN
+                    SET @action_type = 'UPDATE';
+                    SELECT @update_id = update_id, @tenant_id = tenant_id FROM inserted;
+                    
+                    SELECT @old_data = (
+                        SELECT task_id, update_date, actual_qty, daily_update_qty
+                        FROM deleted
+                        FOR JSON AUTO
+                    );
+
+                    SELECT @new_data = (
+                        SELECT task_id, update_date, actual_qty, daily_update_qty
+                        FROM inserted
+                        FOR JSON AUTO
+                    );
+
+                    INSERT INTO audit_logs (tenant_id, table_name, record_id, action_type, old_data, new_data, changed_by, changed_on)
+                    VALUES (@tenant_id, 'task_updates', @update_id, @action_type, @old_data, @new_data, @user_id, GETDATE());
+                END
+            END
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
+

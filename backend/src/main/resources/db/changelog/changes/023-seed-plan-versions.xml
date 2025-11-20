@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <!-- Seed plan versions for demo tenant (tenant_id = 1) -->
+    <!-- Task: "Excavation Zone A / Trench Digging" -->
+    <changeSet id="023-seed-plan-versions" author="projects-module">
+        <comment>Seed plan versions and plan lines for demo task</comment>
+        
+        <!-- First, create or find the task for "Excavation Zone A / Trench Digging" -->
+        <insert tableName="tasks">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="project_id" valueComputed="(SELECT project_id FROM projects WHERE project_code = 'PROJ001' AND tenant_id = 1)"/>
+            <column name="wbs_id" valueComputed="(SELECT wbs_id FROM wbs WHERE wbs_code = 'WBS002' AND tenant_id = 1)"/>
+            <column name="task_code" value="TASK_EXCAVATION_A"/>
+            <column name="task_name" value="Excavation Zone A / Trench Digging"/>
+            <column name="description" value="Excavation work for Zone A including trench digging"/>
+            <column name="start_date" valueDate="2025-11-05"/>
+            <column name="end_date" valueDate="2025-11-14"/>
+            <column name="planned_qty" valueNumeric="100.00"/>
+            <column name="actual_qty" valueNumeric="0.00"/>
+            <column name="unit" value="CUBIC_METERS"/>
+            <column name="status" value="PLANNED"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <!-- Plan Version 1: 10 days, qty 100 (10 per day) -->
+        <insert tableName="plan_versions">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="task_id" valueComputed="(SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1)"/>
+            <column name="version_no" valueNumeric="1"/>
+            <column name="version_date" valueDate="2025-11-05"/>
+            <column name="description" value="Initial plan version - 10 cubic meters per day"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <!-- Plan Lines for Version 1: 10 days, 10 per day -->
+        <insert tableName="plan_lines">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="plan_version_id" valueComputed="(SELECT plan_version_id FROM plan_versions WHERE task_id = (SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1) AND version_no = 1 AND tenant_id = 1)"/>
+            <column name="task_id" valueComputed="(SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1)"/>
+            <column name="line_number" valueNumeric="1"/>
+            <column name="work_date" valueDate="2025-11-05"/>
+            <column name="planned_qty" valueNumeric="10.00"/>
+            <column name="description" value="Day 1 excavation"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="plan_lines">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="plan_version_id" valueComputed="(SELECT plan_version_id FROM plan_versions WHERE task_id = (SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1) AND version_no = 1 AND tenant_id = 1)"/>
+            <column name="task_id" valueComputed="(SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1)"/>
+            <column name="line_number" valueNumeric="2"/>
+            <column name="work_date" valueDate="2025-11-06"/>
+            <column name="planned_qty" valueNumeric="10.00"/>
+            <column name="description" value="Day 2 excavation"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="plan_lines">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="plan_version_id" valueComputed="(SELECT plan_version_id FROM plan_versions WHERE task_id = (SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1) AND version_no = 1 AND tenant_id = 1)"/>
+            <column name="task_id" valueComputed="(SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1)"/>
+            <column name="line_number" valueNumeric="3"/>
+            <column name="work_date" valueDate="2025-11-07"/>
+            <column name="planned_qty" valueNumeric="10.00"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="plan_lines">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="plan_version_id" valueComputed="(SELECT plan_version_id FROM plan_versions WHERE task_id = (SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1) AND version_no = 1 AND tenant_id = 1)"/>
+            <column name="task_id" valueComputed="(SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1)"/>
+            <column name="line_number" valueNumeric="4"/>
+            <column name="work_date" valueDate="2025-11-08"/>
+            <column name="planned_qty" valueNumeric="10.00"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="plan_lines">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="plan_version_id" valueComputed="(SELECT plan_version_id FROM plan_versions WHERE task_id = (SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1) AND version_no = 1 AND tenant_id = 1)"/>
+            <column name="task_id" valueComputed="(SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1)"/>
+            <column name="line_number" valueNumeric="5"/>
+            <column name="work_date" valueDate="2025-11-09"/>
+            <column name="planned_qty" valueNumeric="10.00"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="plan_lines">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="plan_version_id" valueComputed="(SELECT plan_version_id FROM plan_versions WHERE task_id = (SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1) AND version_no = 1 AND tenant_id = 1)"/>
+            <column name="task_id" valueComputed="(SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1)"/>
+            <column name="line_number" valueNumeric="6"/>
+            <column name="work_date" valueDate="2025-11-10"/>
+            <column name="planned_qty" valueNumeric="10.00"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="plan_lines">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="plan_version_id" valueComputed="(SELECT plan_version_id FROM plan_versions WHERE task_id = (SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1) AND version_no = 1 AND tenant_id = 1)"/>
+            <column name="task_id" valueComputed="(SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1)"/>
+            <column name="line_number" valueNumeric="7"/>
+            <column name="work_date" valueDate="2025-11-11"/>
+            <column name="planned_qty" valueNumeric="10.00"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="plan_lines">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="plan_version_id" valueComputed="(SELECT plan_version_id FROM plan_versions WHERE task_id = (SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1) AND version_no = 1 AND tenant_id = 1)"/>
+            <column name="task_id" valueComputed="(SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1)"/>
+            <column name="line_number" valueNumeric="8"/>
+            <column name="work_date" valueDate="2025-11-12"/>
+            <column name="planned_qty" valueNumeric="10.00"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="plan_lines">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="plan_version_id" valueComputed="(SELECT plan_version_id FROM plan_versions WHERE task_id = (SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1) AND version_no = 1 AND tenant_id = 1)"/>
+            <column name="task_id" valueComputed="(SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1)"/>
+            <column name="line_number" valueNumeric="9"/>
+            <column name="work_date" valueDate="2025-11-13"/>
+            <column name="planned_qty" valueNumeric="10.00"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="plan_lines">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="plan_version_id" valueComputed="(SELECT plan_version_id FROM plan_versions WHERE task_id = (SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1) AND version_no = 1 AND tenant_id = 1)"/>
+            <column name="task_id" valueComputed="(SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1)"/>
+            <column name="line_number" valueNumeric="10"/>
+            <column name="work_date" valueDate="2025-11-14"/>
+            <column name="planned_qty" valueNumeric="10.00"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <!-- Plan Version 2: 10 days, qty 120 (12 per day) -->
+        <insert tableName="plan_versions">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="task_id" valueComputed="(SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1)"/>
+            <column name="version_no" valueNumeric="2"/>
+            <column name="version_date" valueDate="2025-11-05"/>
+            <column name="description" value="Revised plan version - 12 cubic meters per day"/>
+            <column name="is_active" valueBoolean="false"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <!-- Plan Lines for Version 2: 10 days, 12 per day -->
+        <insert tableName="plan_lines">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="plan_version_id" valueComputed="(SELECT plan_version_id FROM plan_versions WHERE task_id = (SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1) AND version_no = 2 AND tenant_id = 1)"/>
+            <column name="task_id" valueComputed="(SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1)"/>
+            <column name="line_number" valueNumeric="1"/>
+            <column name="work_date" valueDate="2025-11-05"/>
+            <column name="planned_qty" valueNumeric="12.00"/>
+            <column name="description" value="Day 1 excavation - revised"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="plan_lines">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="plan_version_id" valueComputed="(SELECT plan_version_id FROM plan_versions WHERE task_id = (SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1) AND version_no = 2 AND tenant_id = 1)"/>
+            <column name="task_id" valueComputed="(SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1)"/>
+            <column name="line_number" valueNumeric="2"/>
+            <column name="work_date" valueDate="2025-11-06"/>
+            <column name="planned_qty" valueNumeric="12.00"/>
+            <column name="description" value="Day 2 excavation - revised"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="plan_lines">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="plan_version_id" valueComputed="(SELECT plan_version_id FROM plan_versions WHERE task_id = (SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1) AND version_no = 2 AND tenant_id = 1)"/>
+            <column name="task_id" valueComputed="(SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1)"/>
+            <column name="line_number" valueNumeric="3"/>
+            <column name="work_date" valueDate="2025-11-07"/>
+            <column name="planned_qty" valueNumeric="12.00"/>
+            <column name="description" value="Day 3 excavation - revised"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="plan_lines">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="plan_version_id" valueComputed="(SELECT plan_version_id FROM plan_versions WHERE task_id = (SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1) AND version_no = 2 AND tenant_id = 1)"/>
+            <column name="task_id" valueComputed="(SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1)"/>
+            <column name="line_number" valueNumeric="4"/>
+            <column name="work_date" valueDate="2025-11-08"/>
+            <column name="planned_qty" valueNumeric="12.00"/>
+            <column name="description" value="Day 4 excavation - revised"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="plan_lines">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="plan_version_id" valueComputed="(SELECT plan_version_id FROM plan_versions WHERE task_id = (SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1) AND version_no = 2 AND tenant_id = 1)"/>
+            <column name="task_id" valueComputed="(SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1)"/>
+            <column name="line_number" valueNumeric="5"/>
+            <column name="work_date" valueDate="2025-11-09"/>
+            <column name="planned_qty" valueNumeric="12.00"/>
+            <column name="description" value="Day 5 excavation - revised"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="plan_lines">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="plan_version_id" valueComputed="(SELECT plan_version_id FROM plan_versions WHERE task_id = (SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1) AND version_no = 2 AND tenant_id = 1)"/>
+            <column name="task_id" valueComputed="(SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1)"/>
+            <column name="line_number" valueNumeric="6"/>
+            <column name="work_date" valueDate="2025-11-10"/>
+            <column name="planned_qty" valueNumeric="12.00"/>
+            <column name="description" value="Day 6 excavation - revised"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="plan_lines">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="plan_version_id" valueComputed="(SELECT plan_version_id FROM plan_versions WHERE task_id = (SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1) AND version_no = 2 AND tenant_id = 1)"/>
+            <column name="task_id" valueComputed="(SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1)"/>
+            <column name="line_number" valueNumeric="7"/>
+            <column name="work_date" valueDate="2025-11-11"/>
+            <column name="planned_qty" valueNumeric="12.00"/>
+            <column name="description" value="Day 7 excavation - revised"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="plan_lines">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="plan_version_id" valueComputed="(SELECT plan_version_id FROM plan_versions WHERE task_id = (SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1) AND version_no = 2 AND tenant_id = 1)"/>
+            <column name="task_id" valueComputed="(SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1)"/>
+            <column name="line_number" valueNumeric="8"/>
+            <column name="work_date" valueDate="2025-11-12"/>
+            <column name="planned_qty" valueNumeric="12.00"/>
+            <column name="description" value="Day 8 excavation - revised"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="plan_lines">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="plan_version_id" valueComputed="(SELECT plan_version_id FROM plan_versions WHERE task_id = (SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1) AND version_no = 2 AND tenant_id = 1)"/>
+            <column name="task_id" valueComputed="(SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1)"/>
+            <column name="line_number" valueNumeric="9"/>
+            <column name="work_date" valueDate="2025-11-13"/>
+            <column name="planned_qty" valueNumeric="12.00"/>
+            <column name="description" value="Day 9 excavation - revised"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="plan_lines">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="plan_version_id" valueComputed="(SELECT plan_version_id FROM plan_versions WHERE task_id = (SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1) AND version_no = 2 AND tenant_id = 1)"/>
+            <column name="task_id" valueComputed="(SELECT task_id FROM tasks WHERE task_code = 'TASK_EXCAVATION_A' AND tenant_id = 1)"/>
+            <column name="line_number" valueNumeric="10"/>
+            <column name="work_date" valueDate="2025-11-14"/>
+            <column name="planned_qty" valueNumeric="12.00"/>
+            <column name="description" value="Day 10 excavation - revised"/>
+            <column name="activate_flag" valueBoolean="true"/>
+            <column name="created_by" valueNumeric="1"/>
+            <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_on" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+    </changeSet>
+
+</databaseChangeLog>
+

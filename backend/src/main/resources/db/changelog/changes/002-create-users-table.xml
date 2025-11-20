@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <changeSet id="002-create-users-table" author="authorization-module">
+        <createTable tableName="users">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_users_tenant" references="tenants(id)"/>
+            </column>
+            <column name="email" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="password_hash" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="first_name" type="VARCHAR(100)"/>
+            <column name="last_name" type="VARCHAR(100)"/>
+            <column name="is_active" type="BIT" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_login_at" type="DATETIME2"/>
+            <column name="created_at" type="DATETIME2">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="DATETIME2"/>
+        </createTable>
+
+        <createIndex indexName="idx_user_tenant_email" tableName="users" unique="true">
+            <column name="tenant_id"/>
+            <column name="email"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <changeSet id="007-create-user-permissions-table" author="authorization-module">
+        <createTable tableName="user_permissions">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_user_permissions_user" references="users(id)"/>
+            </column>
+            <column name="permission_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_user_permissions_permission" references="permissions(id)"/>
+            </column>
+            <column name="created_at" type="DATETIME2">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_user_permission_unique" tableName="user_permissions" unique="true">
+            <column name="user_id"/>
+            <column name="permission_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+

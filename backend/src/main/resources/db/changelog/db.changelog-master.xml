@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <include file="db/changelog/changes/001-create-tenants-table.xml"/>
+    <include file="db/changelog/changes/002-create-users-table.xml"/>
+    <include file="db/changelog/changes/003-create-roles-table.xml"/>
+    <include file="db/changelog/changes/004-create-permissions-table.xml"/>
+    <include file="db/changelog/changes/005-create-user-roles-table.xml"/>
+    <include file="db/changelog/changes/006-create-role-permissions-table.xml"/>
+    <include file="db/changelog/changes/007-create-user-permissions-table.xml"/>
+    <include file="db/changelog/changes/008-create-page-authorizations-table.xml"/>
+    <include file="db/changelog/changes/009-create-user-authorizations-table.xml"/>
+    <include file="db/changelog/changes/010-seed-data.xml"/>
+    <include file="db/changelog/changes/011-create-master-codes-table.xml"/>
+    <include file="db/changelog/changes/012-seed-master-codes.xml"/>
+    <include file="db/changelog/changes/013-add-master-data-permissions.xml"/>
+    <include file="db/changelog/changes/014-create-business-rules-table.xml"/>
+    <include file="db/changelog/changes/015-seed-business-rules.xml"/>
+    <include file="db/changelog/changes/016-add-business-rules-permissions.xml"/>
+    <include file="db/changelog/changes/017-create-projects-wbs-tasks-tables.xml"/>
+    <include file="db/changelog/changes/018-create-plan-tables.xml"/>
+    <include file="db/changelog/changes/019-create-task-updates-confirmations-audit-tables.xml"/>
+    <include file="db/changelog/changes/020-create-audit-triggers.xml"/>
+    <include file="db/changelog/changes/021-seed-sample-projects-wbs-tasks.xml"/>
+    <include file="db/changelog/changes/022-update-plan-schema-and-add-audit.xml"/>
+    <include file="db/changelog/changes/023-seed-plan-versions.xml"/>
+    <include file="db/changelog/changes/024-add-projects-permissions.xml"/>
+    <include file="db/changelog/changes/025-assign-admin-work-center-authorizations.xml"/>
+
+</databaseChangeLog>
+

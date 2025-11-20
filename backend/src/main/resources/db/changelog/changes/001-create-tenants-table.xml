@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <changeSet id="001-create-tenants-table" author="authorization-module">
+        <createTable tableName="tenants">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_code" type="VARCHAR(50)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="client_code" type="VARCHAR(50)"/>
+            <column name="is_active" type="BIT" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="DATETIME2">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="DATETIME2"/>
+        </createTable>
+
+        <createIndex indexName="idx_tenant_code" tableName="tenants">
+            <column name="tenant_code"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+
