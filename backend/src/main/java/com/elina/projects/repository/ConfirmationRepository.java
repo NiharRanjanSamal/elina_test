@@ -41,5 +41,19 @@ public interface ConfirmationRepository extends TenantAwareRepository<Confirmati
     @Query("SELECT COUNT(c) > 0 FROM Confirmation c WHERE c.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
            "AND c.entityType = :entityType AND c.entityId = :entityId")
     boolean existsByEntityTypeAndEntityId(@Param("entityType") String entityType, @Param("entityId") Long entityId);
+
+    /**
+     * Find confirmation by entity type and entity ID that covers a specific date.
+     * Used to check if an update date is locked by a confirmation.
+     * A confirmation "covers" a date if confirmation_date >= update_date.
+     */
+    @Query("SELECT c FROM Confirmation c WHERE c.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
+           "AND c.entityType = :entityType AND c.entityId = :entityId " +
+           "AND c.confirmationDate >= :updateDate")
+    Optional<Confirmation> findLockingConfirmation(
+        @Param("entityType") String entityType,
+        @Param("entityId") Long entityId,
+        @Param("updateDate") java.time.LocalDate updateDate
+    );
 }
 

@@ -23,28 +23,28 @@ public interface PlanVersionRepository extends TenantAwareRepository<PlanVersion
     @Query("SELECT pv FROM PlanVersion pv WHERE pv.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
            "AND pv.task.taskId = :taskId " +
            "AND (:activeOnly IS NULL OR :activeOnly = false OR pv.activateFlag = true) " +
-           "ORDER BY pv.versionNumber DESC")
+           "ORDER BY pv.versionNo DESC")
     List<PlanVersion> findByTaskId(@Param("taskId") Long taskId, @Param("activeOnly") Boolean activeOnly);
 
     /**
      * Find current plan version for a task.
      */
     @Query("SELECT pv FROM PlanVersion pv WHERE pv.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
-           "AND pv.task.taskId = :taskId AND pv.isCurrent = true AND pv.activateFlag = true")
+           "AND pv.task.taskId = :taskId AND pv.isActive = true AND pv.activateFlag = true")
     Optional<PlanVersion> findCurrentByTaskId(@Param("taskId") Long taskId);
 
     /**
      * Find plan version by task and version number.
      */
     @Query("SELECT pv FROM PlanVersion pv WHERE pv.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
-           "AND pv.task.taskId = :taskId AND pv.versionNumber = :versionNumber")
-    Optional<PlanVersion> findByTaskIdAndVersionNumber(@Param("taskId") Long taskId, @Param("versionNumber") Integer versionNumber);
+           "AND pv.task.taskId = :taskId AND pv.versionNo = :versionNo")
+    Optional<PlanVersion> findByTaskIdAndVersionNo(@Param("taskId") Long taskId, @Param("versionNo") Integer versionNo);
 
     /**
      * Find maximum version number for a task.
      */
-    @Query("SELECT MAX(pv.versionNumber) FROM PlanVersion pv WHERE pv.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
+    @Query("SELECT MAX(pv.versionNo) FROM PlanVersion pv WHERE pv.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
            "AND pv.task.taskId = :taskId")
-    Integer findMaxVersionNumberByTaskId(@Param("taskId") Long taskId);
+    Integer findMaxVersionNoByTaskId(@Param("taskId") Long taskId);
 }
 

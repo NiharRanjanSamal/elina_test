@@ -21,8 +21,10 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "plan_versions", indexes = {
     @Index(name = "idx_plan_versions_tenant_id", columnList = "tenant_id"),
-    @Index(name = "idx_plan_versions_task_id", columnList = "tenant_id,task_id"),
+    @Index(name = "idx_plan_versions_tenant_task_version", columnList = "tenant_id,task_id,version_no"),
     @Index(name = "idx_plan_versions_tenant_active", columnList = "tenant_id,activate_flag")
+}, uniqueConstraints = {
+    @UniqueConstraint(name = "uk_plan_versions_task_version", columnNames = {"task_id", "version_no"})
 })
 @Data
 @NoArgsConstructor
@@ -31,8 +33,8 @@ public class PlanVersion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "version_id")
-    private Long versionId;
+    @Column(name = "plan_version_id")
+    private Long planVersionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id", nullable = false)
@@ -42,8 +44,8 @@ public class PlanVersion {
     @JoinColumn(name = "task_id", nullable = false)
     private Task task;
 
-    @Column(name = "version_number", nullable = false)
-    private Integer versionNumber;
+    @Column(name = "version_no", nullable = false)
+    private Integer versionNo;
 
     @Column(name = "version_date", nullable = false)
     private LocalDate versionDate;
@@ -51,8 +53,8 @@ public class PlanVersion {
     @Column(name = "description", length = 500)
     private String description;
 
-    @Column(name = "is_current", nullable = false)
-    private Boolean isCurrent = false;
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = false;
 
     @Column(name = "activate_flag", nullable = false)
     private Boolean activateFlag = true;

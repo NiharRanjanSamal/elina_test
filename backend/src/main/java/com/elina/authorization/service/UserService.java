@@ -36,9 +36,8 @@ public class UserService {
     @Transactional(readOnly = true)
     public List<User> findAll() {
         Long tenantId = TenantContext.getTenantId();
-        return userRepository.findAll().stream()
-                .filter(user -> user.getTenant().getId().equals(tenantId))
-                .toList();
+        // Fetch users with tenant eagerly loaded to avoid lazy loading issues during serialization
+        return userRepository.findByTenantId(tenantId);
     }
 
     @Transactional(readOnly = true)

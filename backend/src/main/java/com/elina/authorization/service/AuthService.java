@@ -4,6 +4,7 @@ import com.elina.authorization.context.TenantContext;
 import com.elina.authorization.dto.LoginRequest;
 import com.elina.authorization.dto.LoginResponse;
 import com.elina.authorization.entity.*;
+import com.elina.authorization.exception.AuthenticationException;
 import com.elina.authorization.repository.*;
 import com.elina.authorization.security.JwtTokenProvider;
 import org.slf4j.Logger;
@@ -68,31 +69,31 @@ public class AuthService {
         Tenant tenant = tenantRepository.findByTenantCode(request.getTenantCode())
                 .orElseThrow(() -> {
                     logger.warn("Login failed: Tenant code '{}' not found", request.getTenantCode());
-                    return new RuntimeException("Invalid tenant code: " + request.getTenantCode());
+                    return new AuthenticationException("Invalid tenant code: " + request.getTenantCode());
                 });
 
         if (!tenant.getIsActive()) {
             logger.warn("Login failed: Tenant '{}' is not active", request.getTenantCode());
-            throw new RuntimeException("Tenant is not active");
+            throw new AuthenticationException("Tenant is not active");
         }
 
         // Find user by email and tenant (case-insensitive)
         User user = userRepository.findByEmailAndTenantId(normalizedEmail, tenant.getId())
                 .orElseThrow(() -> {
                     logger.warn("Login failed: User with email '{}' not found for tenant '{}'", normalizedEmail, request.getTenantCode());
-                    return new RuntimeException("Invalid email or password");
+                    return new AuthenticationException("Invalid email or password");
                 });
 
         if (!user.getIsActive()) {
             logger.warn("Login failed: User '{}' is not active", normalizedEmail);
-            throw new RuntimeException("User is not active");
+            throw new AuthenticationException("User is not active");
         }
 
         // Verify password
         boolean passwordMatches = passwordEncoder.matches(request.getPassword(), user.getPasswordHash());
         if (!passwordMatches) {
             logger.warn("Login failed: Password mismatch for user '{}' in tenant '{}'", normalizedEmail, request.getTenantCode());
-            throw new RuntimeException("Invalid email or password");
+            throw new AuthenticationException("Invalid email or password");
         }
 
         // Update last login

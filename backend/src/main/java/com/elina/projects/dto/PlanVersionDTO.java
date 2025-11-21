@@ -15,13 +15,13 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PlanVersionDTO {
-    private Long versionId;
+    private Long planVersionId;
     private Long tenantId;
     private Long taskId;
-    private Integer versionNumber;
+    private Integer versionNo;
     private LocalDate versionDate;
     private String description;
-    private Boolean isCurrent;
+    private Boolean isActive;
     private Boolean activateFlag;
     private Long createdBy;
     private LocalDateTime createdOn;

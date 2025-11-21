@@ -26,6 +26,10 @@
     <include file="db/changelog/changes/019-create-task-updates-confirmations-audit-tables.xml"/>
     <include file="db/changelog/changes/020-create-audit-triggers.xml"/>
     <include file="db/changelog/changes/021-seed-sample-projects-wbs-tasks.xml"/>
+    <include file="db/changelog/changes/022-update-plan-schema-and-add-audit.xml"/>
+    <include file="db/changelog/changes/023-seed-plan-versions.xml"/>
+    <include file="db/changelog/changes/024-add-projects-permissions.xml"/>
+    <include file="db/changelog/changes/025-assign-admin-work-center-authorizations.xml"/>
 
 </databaseChangeLog>
 

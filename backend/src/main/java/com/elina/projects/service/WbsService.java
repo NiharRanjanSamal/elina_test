@@ -11,6 +11,7 @@ import com.elina.projects.dto.WbsCreateDTO;
 import com.elina.projects.dto.WbsDTO;
 import com.elina.projects.entity.Project;
 import com.elina.projects.entity.Wbs;
+import com.elina.projects.exception.NotFoundException;
 import com.elina.projects.repository.ProjectRepository;
 import com.elina.projects.repository.WbsRepository;
 import org.slf4j.Logger;
@@ -152,7 +153,7 @@ public class WbsService {
                 .orElseThrow(() -> new RuntimeException("Project not found"));
         
         if (!project.getTenant().getId().equals(tenantId)) {
-            throw new RuntimeException("Project not found");
+            throw new NotFoundException("Project not found");
         }
 
         // Get root WBS
@@ -192,7 +193,7 @@ public class WbsService {
                 .orElseThrow(() -> new RuntimeException("Project not found"));
         
         if (!project.getTenant().getId().equals(tenantId)) {
-            throw new RuntimeException("Project not found");
+            throw new NotFoundException("Project not found");
         }
 
         List<Wbs> wbsList = wbsRepository.findByProjectId(projectId, true);
@@ -208,16 +209,16 @@ public class WbsService {
         Long userId = getCurrentUserId();
 
         Wbs entity = wbsRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("WBS not found"));
+                .orElseThrow(() -> new NotFoundException("WBS not found"));
         
         // Verify tenant ownership
         if (!entity.getTenant().getId().equals(tenantId)) {
-            throw new RuntimeException("WBS not found");
+            throw new NotFoundException("WBS not found");
         }
 
         // Check authorization
         if (!isUserAuthorized(userId, entity.getWorkCenter(), entity.getCostCenter())) {
-            throw new RuntimeException("WBS not found"); // Don't reveal existence
+            throw new NotFoundException("WBS not found"); // Don't reveal existence
         }
         
         return toDTO(entity);
@@ -236,7 +237,7 @@ public class WbsService {
                 .orElseThrow(() -> new RuntimeException("Project not found"));
         
         if (!project.getTenant().getId().equals(tenantId)) {
-            throw new RuntimeException("Project not found");
+            throw new NotFoundException("Project not found");
         }
 
         // Check authorization
@@ -252,10 +253,10 @@ public class WbsService {
         // Validate dates against parent WBS if parent exists
         if (dto.getParentWbsId() != null) {
             Wbs parentWbs = wbsRepository.findById(dto.getParentWbsId())
-                    .orElseThrow(() -> new RuntimeException("Parent WBS not found"));
+                    .orElseThrow(() -> new NotFoundException("Parent WBS not found"));
             
             if (!parentWbs.getTenant().getId().equals(tenantId)) {
-                throw new RuntimeException("Parent WBS not found");
+                throw new NotFoundException("Parent WBS not found");
             }
 
             if (dto.getStartDate() != null && parentWbs.getStartDate() != null) {
@@ -338,11 +339,11 @@ public class WbsService {
         Long userId = getCurrentUserId();
 
         Wbs entity = wbsRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("WBS not found"));
+                .orElseThrow(() -> new NotFoundException("WBS not found"));
 
         // Verify tenant ownership
         if (!entity.getTenant().getId().equals(tenantId)) {
-            throw new RuntimeException("WBS not found");
+            throw new NotFoundException("WBS not found");
         }
 
         // Check authorization
@@ -439,11 +440,11 @@ public class WbsService {
         Long userId = getCurrentUserId();
 
         Wbs entity = wbsRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("WBS not found"));
+                .orElseThrow(() -> new NotFoundException("WBS not found"));
 
         // Verify tenant ownership
         if (!entity.getTenant().getId().equals(tenantId)) {
-            throw new RuntimeException("WBS not found");
+            throw new NotFoundException("WBS not found");
         }
 
         // Check authorization
@@ -472,10 +473,10 @@ public class WbsService {
         Wbs newParent = null;
         if (newParentWbsId != null) {
             newParent = wbsRepository.findById(newParentWbsId)
-                    .orElseThrow(() -> new RuntimeException("Parent WBS not found"));
+                    .orElseThrow(() -> new NotFoundException("Parent WBS not found"));
             
             if (!newParent.getTenant().getId().equals(tenantId)) {
-                throw new RuntimeException("Parent WBS not found");
+                throw new NotFoundException("Parent WBS not found");
             }
         }
 
@@ -516,11 +517,11 @@ public class WbsService {
         Long userId = getCurrentUserId();
 
         Wbs entity = wbsRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("WBS not found"));
+                .orElseThrow(() -> new NotFoundException("WBS not found"));
 
         // Verify tenant ownership
         if (!entity.getTenant().getId().equals(tenantId)) {
-            throw new RuntimeException("WBS not found");
+            throw new NotFoundException("WBS not found");
         }
 
         // Check authorization

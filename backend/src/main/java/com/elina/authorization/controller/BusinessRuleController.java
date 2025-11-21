@@ -16,11 +16,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.elina.authorization.context.TenantContext;
 import com.elina.authorization.dto.BusinessRuleCreateDTO;
 import com.elina.authorization.dto.BusinessRuleDTO;
+import com.elina.authorization.rule.BusinessRuleContext;
+import com.elina.authorization.rule.BusinessRuleEngine;
 import com.elina.authorization.service.BusinessRuleService;
 
 import jakarta.validation.Valid;
+import java.util.Map;
 
 /**
  * Business Rule management controller with tenant-aware CRUD operations.
@@ -36,9 +40,11 @@ import jakarta.validation.Valid;
 public class BusinessRuleController {
 
     private final BusinessRuleService businessRuleService;
+    private final BusinessRuleEngine businessRuleEngine;
 
-    public BusinessRuleController(BusinessRuleService businessRuleService) {
+    public BusinessRuleController(BusinessRuleService businessRuleService, BusinessRuleEngine businessRuleEngine) {
         this.businessRuleService = businessRuleService;
+        this.businessRuleEngine = businessRuleEngine;
     }
 
     /**
@@ -153,6 +159,97 @@ public class BusinessRuleController {
     public ResponseEntity<BusinessRuleDTO> toggleActivateFlag(@PathVariable Long id) {
         BusinessRuleDTO result = businessRuleService.toggleActivateFlag(id);
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Validate a single field/rule before form submission (pre-emptive validation).
+     * This endpoint allows frontend to validate fields inline before submit.
+     * Requires: PAGE_PROJECTS_VIEW or higher
+     */
+    @PostMapping("/validate-single")
+    public ResponseEntity<Map<String, Object>> validateSingle(@RequestBody Map<String, Object> request) {
+        try {
+            Integer ruleNumber = (Integer) request.get("ruleNumber");
+            if (ruleNumber == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "ruleNumber is required"));
+            }
+
+            Map<String, Object> contextMap = (Map<String, Object>) request.get("context");
+            if (contextMap == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "context is required"));
+            }
+
+            Long tenantId = TenantContext.getTenantId();
+            Long userId = getCurrentUserId();
+
+            // Build BusinessRuleContext from request - build in one fluent chain
+            String entityType = contextMap.containsKey("entityType") ? (String) contextMap.get("entityType") : null;
+            Long entityId = null;
+            if (contextMap.containsKey("entityId") && contextMap.get("entityId") != null) {
+                Object entityIdObj = contextMap.get("entityId");
+                entityId = entityIdObj instanceof Number 
+                    ? ((Number) entityIdObj).longValue() 
+                    : Long.parseLong(entityIdObj.toString());
+            }
+            
+            java.time.LocalDate updateDate = null;
+            if (contextMap.containsKey("updateDate") || contextMap.containsKey("date")) {
+                String dateStr = (String) contextMap.getOrDefault("updateDate", contextMap.get("date"));
+                if (dateStr != null) {
+                    updateDate = java.time.LocalDate.parse(dateStr);
+                }
+            }
+            
+            java.time.LocalDate planVersionDate = null;
+            if (contextMap.containsKey("planVersionDate")) {
+                Object planDateObj = contextMap.get("planVersionDate");
+                if (planDateObj != null) {
+                    planVersionDate = java.time.LocalDate.parse(planDateObj.toString());
+                }
+            }
+            
+            BusinessRuleContext context = BusinessRuleContext.builder()
+                    .tenantId(tenantId)
+                    .userId(userId)
+                    .entityType(entityType)
+                    .entityId(entityId)
+                    .updateDate(updateDate)
+                    .planVersionDate(planVersionDate)
+                    .build();
+
+            // Validate the rule
+            businessRuleEngine.validate(ruleNumber, context);
+
+            // If validation passes, return success
+            return ResponseEntity.ok(Map.of(
+                    "valid", true,
+                    "message", "Validation passed"
+            ));
+        } catch (com.elina.authorization.rule.BusinessRuleException e) {
+            // Return validation error
+            Map<String, Object> error = new java.util.HashMap<>();
+            error.put("valid", false);
+            error.put("message", e.getMessage());
+            error.put("ruleNumber", e.getRuleNumber());
+            if (e.getHint() != null) {
+                error.put("hint", e.getHint());
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Validation failed: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Get current user ID from SecurityContext.
+     */
+    private Long getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof Long) {
+            return (Long) authentication.getPrincipal();
+        }
+        return null;
     }
 }
 

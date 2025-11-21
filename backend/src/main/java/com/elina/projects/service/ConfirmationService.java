@@ -11,6 +11,7 @@ import com.elina.projects.dto.ConfirmationDTO;
 import com.elina.projects.entity.Confirmation;
 import com.elina.projects.entity.Task;
 import com.elina.projects.entity.Wbs;
+import com.elina.projects.exception.NotFoundException;
 import com.elina.projects.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -119,10 +120,10 @@ public class ConfirmationService {
         // Verify entity exists and belongs to tenant
         if ("WBS".equals(dto.getEntityType())) {
             Wbs wbs = wbsRepository.findById(dto.getEntityId())
-                    .orElseThrow(() -> new RuntimeException("WBS not found"));
+                    .orElseThrow(() -> new NotFoundException("WBS not found"));
             
             if (!wbs.getTenant().getId().equals(tenantId)) {
-                throw new RuntimeException("WBS not found");
+                throw new NotFoundException("WBS not found");
             }
 
             // Mark WBS as confirmed
@@ -132,10 +133,10 @@ public class ConfirmationService {
             wbsRepository.save(wbs);
         } else if ("TASK".equals(dto.getEntityType())) {
             Task task = taskRepository.findById(dto.getEntityId())
-                    .orElseThrow(() -> new RuntimeException("Task not found"));
+                    .orElseThrow(() -> new NotFoundException("Task not found"));
             
             if (!task.getTenant().getId().equals(tenantId)) {
-                throw new RuntimeException("Task not found");
+                throw new NotFoundException("Task not found");
             }
 
             // Mark Task as confirmed

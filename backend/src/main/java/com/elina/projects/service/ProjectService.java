@@ -10,6 +10,7 @@ import com.elina.projects.dto.ProjectCreateDTO;
 import com.elina.projects.dto.ProjectDTO;
 import com.elina.projects.dto.ProjectDetailsDTO;
 import com.elina.projects.entity.Project;
+import com.elina.projects.exception.NotFoundException;
 import com.elina.projects.repository.ProjectRepository;
 import com.elina.projects.repository.WbsRepository;
 import org.slf4j.Logger;
@@ -114,11 +115,11 @@ public class ProjectService {
     public ProjectDTO getProject(Long id) {
         Long tenantId = TenantContext.getTenantId();
         Project entity = projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+                .orElseThrow(() -> new NotFoundException("Project not found"));
         
         // Verify tenant ownership
         if (!entity.getTenant().getId().equals(tenantId)) {
-            throw new RuntimeException("Project not found");
+            throw new NotFoundException("Project not found");
         }
         
         return toDTO(entity);
@@ -287,11 +288,11 @@ public class ProjectService {
         Long userId = getCurrentUserId();
 
         Project entity = projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+                .orElseThrow(() -> new NotFoundException("Project not found"));
 
         // Verify tenant ownership
         if (!entity.getTenant().getId().equals(tenantId)) {
-            throw new RuntimeException("Project not found");
+            throw new NotFoundException("Project not found");
         }
 
         // Check if project code change would create duplicate
@@ -370,11 +371,11 @@ public class ProjectService {
         Long tenantId = TenantContext.getTenantId();
 
         Project entity = projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+                .orElseThrow(() -> new NotFoundException("Project not found"));
 
         // Verify tenant ownership
         if (!entity.getTenant().getId().equals(tenantId)) {
-            throw new RuntimeException("Project not found");
+            throw new NotFoundException("Project not found");
         }
 
         // Prepare old data for audit

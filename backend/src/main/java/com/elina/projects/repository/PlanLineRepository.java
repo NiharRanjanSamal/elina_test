@@ -20,10 +20,10 @@ public interface PlanLineRepository extends TenantAwareRepository<PlanLine, Long
      * Find all plan lines for a plan version.
      */
     @Query("SELECT pl FROM PlanLine pl WHERE pl.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
-           "AND pl.planVersion.versionId = :versionId " +
+           "AND pl.planVersion.planVersionId = :planVersionId " +
            "AND (:activeOnly IS NULL OR :activeOnly = false OR pl.activateFlag = true) " +
-           "ORDER BY pl.plannedDate, pl.lineNumber")
-    List<PlanLine> findByVersionId(@Param("versionId") Long versionId, @Param("activeOnly") Boolean activeOnly);
+           "ORDER BY pl.workDate, pl.lineNumber")
+    List<PlanLine> findByPlanVersionId(@Param("planVersionId") Long planVersionId, @Param("activeOnly") Boolean activeOnly);
 
     /**
      * Find all plan lines for a task (across all versions).
@@ -31,14 +31,14 @@ public interface PlanLineRepository extends TenantAwareRepository<PlanLine, Long
     @Query("SELECT pl FROM PlanLine pl WHERE pl.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
            "AND pl.task.taskId = :taskId " +
            "AND (:activeOnly IS NULL OR :activeOnly = false OR pl.activateFlag = true) " +
-           "ORDER BY pl.plannedDate, pl.lineNumber")
+           "ORDER BY pl.workDate, pl.lineNumber")
     List<PlanLine> findByTaskId(@Param("taskId") Long taskId, @Param("activeOnly") Boolean activeOnly);
 
     /**
      * Delete all plan lines for a plan version.
      */
     @Query("DELETE FROM PlanLine pl WHERE pl.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
-           "AND pl.planVersion.versionId = :versionId")
-    void deleteByVersionId(@Param("versionId") Long versionId);
+           "AND pl.planVersion.planVersionId = :planVersionId")
+    void deleteByPlanVersionId(@Param("planVersionId") Long planVersionId);
 }
 

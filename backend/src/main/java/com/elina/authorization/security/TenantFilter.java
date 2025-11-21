@@ -58,14 +58,14 @@ public class TenantFilter extends OncePerRequestFilter {
                     List<String> permissions = tokenProvider.getPermissionsFromToken(token);
                     
                     // Combine roles and permissions as authorities
-                    // Spring Security convention: roles should have ROLE_ prefix
+                    // Spring Security convention: roles must be prefixed with "ROLE_"
                     List<SimpleGrantedAuthority> authorities = new java.util.ArrayList<>();
                     if (roles != null) {
                         authorities.addAll(roles.stream()
                                 .map(role -> {
                                     // Add ROLE_ prefix if not already present
-                                    String roleName = role.startsWith("ROLE_") ? role : "ROLE_" + role;
-                                    return new SimpleGrantedAuthority(roleName);
+                                    String roleAuthority = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+                                    return new SimpleGrantedAuthority(roleAuthority);
                                 })
                                 .collect(Collectors.toList()));
                     }

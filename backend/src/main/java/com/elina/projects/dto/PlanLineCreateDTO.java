@@ -21,7 +21,10 @@ public class PlanLineCreateDTO {
     @NotNull(message = "Line number is required")
     private Integer lineNumber;
 
-    @NotNull(message = "Planned date is required")
+    @NotNull(message = "Work date is required")
+    private LocalDate workDate;
+    
+    // Backward compatibility: support plannedDate as alias
     private LocalDate plannedDate;
 
     @NotNull(message = "Planned quantity is required")

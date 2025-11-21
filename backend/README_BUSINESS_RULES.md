@@ -1,279 +1,261 @@
-# Business Rule Engine Module
+# Business Rules Engine Module
 
 ## Overview
 
-The Business Rule Engine module provides **ACTIVE VALIDATION** that prevents actions violating business rules. Rules are not passive - they actively block invalid operations across the entire system.
+The Business Rules Engine is a **centralized validation system** that actively prevents invalid operations across the entire application. Business rules are **NOT passive** - they are **ACTIVE VALIDATORS** that block actions that violate rules.
 
-## Core Concept
+### Key Concepts
 
-**Business rules are ACTIVE VALIDATORS** - they prevent actions that violate rules, not just log violations. When a rule is violated, a `BusinessRuleException` is thrown, which blocks the operation.
+- **Active Validation**: Rules prevent invalid operations, not just log violations
+- **Tenant-Scoped**: Each tenant has their own set of business rules
+- **Centralized Engine**: All validation logic is centralized in `BusinessRuleEngine`
+- **Automatic Enforcement**: Rules are automatically enforced in service layer operations
+- **Configurable**: Rules can be enabled/disabled per tenant via `applicability` and `activate_flag`
 
-## Features
+## Architecture
 
-- **Active Validation**: Rules prevent invalid operations, not just log them
-- **Tenant-Aware**: All rules are scoped to tenants
-- **Rule Registry**: Automatic registration of validators by rule number
-- **Caching**: Rules are cached for performance
-- **Extensible**: Easy to add new rules and validators
-- **Centralized Logic**: All validation logic in one place
+### Backend Components
 
-## Database Schema
+#### 1. **BusinessRuleEngine** (`com.elina.authorization.rule.BusinessRuleEngine`)
+   - Core engine that validates business rules
+   - Caches rules for performance
+   - Routes validation to appropriate validators
+   - Methods:
+     - `boolean isRuleActive(int ruleNumber)` - Check if rule is active
+     - `String getRuleValue(int ruleNumber)` - Get rule value
+     - `void validate(int ruleNumber, BusinessRuleContext ctx)` - Validate a rule
+     - `void validateAll(List<Integer> ruleNumbers, BusinessRuleContext ctx)` - Validate multiple rules
 
-### business_rules Table
+#### 2. **BusinessRuleContext** (`com.elina.authorization.rule.BusinessRuleContext`)
+   - Context object containing all data needed for validation
+   - Fields include:
+     - `tenantId`, `userId`
+     - `entityType`, `entityId`
+     - `plannedQty`, `actualQty`, `updateQty`
+     - `updateDate`, `confirmationDate`, `lockDate`
+     - `taskStartDate`, `taskEndDate`
+     - `wbsStartDate`, `wbsEndDate`
+     - `allocationStartDate`, `allocationEndDate`
+     - `attendanceDate`, `materialUsageDate`
+     - `planVersionDate`
+     - Additional dynamic parameters via `additionalParams` map
+
+#### 3. **BusinessRuleException** (`com.elina.authorization.rule.BusinessRuleException`)
+   - Custom exception thrown when a rule is violated
+   - Contains:
+     - `ruleNumber` - The rule number that was violated
+     - `message` - Error message
+     - `hint` - User-friendly hint for resolving the issue
+
+#### 4. **BusinessRuleValidator Interface**
+   - Interface for individual rule validators
+   - Each validator implements:
+     - `void validate(BusinessRule rule, BusinessRuleContext context)`
+     - `int[] getSupportedRuleNumbers()` - Returns array of rule numbers this validator handles
+
+#### 5. **Individual Validators**
+
+   - **BackdateRuleValidator** (Rules 101, 102)
+     - Rule 101: `BACKDATE_ALLOWED_TILL` - Maximum days allowed for backdating
+     - Rule 102: `BACKDATE_ALLOWED_AFTER_LOCK` - Whether backdating is allowed after lock date
+
+   - **TaskDateRangeRuleValidator** (Rule 201)
+     - Rule 201: `START_DATE_CANNOT_BE_IN_FUTURE` - Task start date cannot be in the future
+
+   - **WbsDateRangeRuleValidator** (Rule 202)
+     - Rule 202: `END_DATE_CANNOT_BE_BEFORE_START_DATE` - WBS end date cannot be before start date
+
+   - **ConfirmationLockRuleValidator** (Rule 301)
+     - Rule 301: `CONFIRMATION_CANNOT_BE_OVERWRITTEN` - Confirmed entries cannot be modified
+
+   - **PlannedVsActualRuleValidator** (Rule 401)
+     - Rule 401: `DAILY_UPDATE_CANNOT_EXCEED_PLANNED_QTY` - Daily update quantity cannot exceed planned quantity
+
+   - **AllocationDateRuleValidator** (Rules 203, 501)
+     - Rule 203: `ALLOCATION_DATE_RANGE_VALIDATION` - General allocation date validation
+     - Rule 501: `ALLOCATION_START_END_DATE_MUST_BE_VALID` - Allocation end date must be on or after start date
+
+   - **AttendanceEntryRuleValidator** (Rules 204, 601)
+     - Rule 204: `ATTENDANCE_DATE_VALIDATION` - General attendance validation
+     - Rule 601: `ATTENDANCE_DATE_CANNOT_BE_IN_FUTURE` - Attendance date cannot be in the future
+
+   - **MaterialUsageRuleValidator** (Rule 205)
+     - Rule 205: `MATERIAL_USAGE_VALIDATION` - Material usage date and quantity validation
+
+### Database Schema
+
+#### business_rules Table
 
 ```sql
 CREATE TABLE business_rules (
-    rule_id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    rule_id BIGINT PRIMARY KEY IDENTITY,
     tenant_id BIGINT NOT NULL,
     rule_number INT NOT NULL,
     control_point VARCHAR(100) NOT NULL,
-    applicability VARCHAR(1) NOT NULL, -- Y or N
+    applicability CHAR(1) NOT NULL,  -- Y or N
     rule_value VARCHAR(500),
     description VARCHAR(1000),
     activate_flag BIT NOT NULL DEFAULT 1,
     created_by BIGINT,
-    created_on DATETIME2 NOT NULL DEFAULT GETDATE(),
+    created_on DATETIME NOT NULL,
     updated_by BIGINT,
-    updated_on DATETIME2,
-    
-    CONSTRAINT FK_business_rules_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id),
-    CONSTRAINT UQ_business_rules_tenant_rule_number UNIQUE (tenant_id, rule_number)
+    updated_on DATETIME,
+    CONSTRAINT uq_plan_versions_task_version UNIQUE (tenant_id, rule_number)
 );
 ```
 
-**Indexes:**
-- `idx_business_rules_tenant_rule_number` on (tenant_id, rule_number) - unique
-- `idx_business_rules_tenant_control_point` on (tenant_id, control_point)
-- `idx_business_rules_tenant_active` on (tenant_id, activate_flag)
+**Fields:**
+- `rule_number`: Unique rule identifier (101, 102, 201, etc.)
+- `control_point`: Where the rule applies (TASK_UPDATE, WBS, TASK, CONFIRMATION, etc.)
+- `applicability`: Y = Rule is applicable, N = Rule is disabled
+- `rule_value`: Rule-specific value (e.g., number of days, Y/N flag)
+- `activate_flag`: true = Rule is active, false = Rule is temporarily disabled
 
 ## Default Business Rules
 
-The seed data includes the following default rules:
+The following rules are seeded for each tenant:
 
-### Rule 101: BACKDATE_ALLOWED_TILL
-- **Control Point**: TASK_UPDATE
-- **Rule Value**: 7 (days)
-- **Description**: Maximum number of days allowed for backdating task updates
-- **Validation**: Prevents backdating more than 7 days
+| Rule # | Control Point | Description | Rule Value |
+|--------|--------------|-------------|------------|
+| 101 | TASK_UPDATE | Maximum days allowed for backdating task updates | 7 (days) |
+| 102 | TASK_UPDATE | Whether backdating is allowed after lock date | N (not allowed) |
+| 201 | TASK | Task start date cannot be in the future | (empty) |
+| 202 | WBS | WBS end date cannot be before start date | (empty) |
+| 203 | ALLOCATION | Resource allocation end date cannot be before start date | (empty) |
+| 204 | ATTENDANCE | Attendance date cannot be in the future | (empty) |
+| 205 | MATERIAL_USAGE | Material usage date and quantity validation | (empty) |
+| 301 | CONFIRMATION | Confirmed entries cannot be modified or overwritten | (empty) |
+| 401 | TASK_UPDATE | Daily update quantity cannot exceed planned quantity | (empty) |
+| 402 | PLAN_VERSION | Plan version date must be valid and cannot be in the future | (empty) |
+| 501 | ALLOCATION | Manpower allocation end date must be on or after start date | (empty) |
+| 601 | ATTENDANCE | Attendance date cannot be in the future | (empty) |
 
-### Rule 102: BACKDATE_ALLOWED_AFTER_LOCK
-- **Control Point**: TASK_UPDATE
-- **Rule Value**: N
-- **Description**: Whether backdating is allowed after lock date
-- **Validation**: Prevents backdating before lock date
+## Rule Enforcement
 
-### Rule 201: START_DATE_CANNOT_BE_IN_FUTURE
-- **Control Point**: TASK
-- **Description**: Task start date cannot be in the future
-- **Validation**: Prevents scheduling tasks with future start dates
+### Integration Points
 
-### Rule 202: WBS_DATE_RANGE_VALIDATION
-- **Control Point**: WBS
-- **Description**: WBS end date cannot be before start date
-- **Validation**: Ensures valid date ranges for work breakdown structures
+Business rules are automatically enforced in the following services:
 
-### Rule 203: ALLOCATION_DATE_RANGE_VALIDATION
-- **Control Point**: ALLOCATION
-- **Description**: Resource allocation end date cannot be before start date
-- **Validation**: Ensures valid allocation periods
+#### TaskService
+- **Rule 201**: Validates task start date when creating/updating tasks
+- **Rule 301**: Validates confirmation status when confirming tasks
 
-### Rule 204: ATTENDANCE_DATE_VALIDATION
-- **Control Point**: ATTENDANCE
-- **Description**: Attendance date cannot be in the future
-- **Validation**: Attendance can only be recorded for today or past dates
+#### WbsService
+- **Rule 202**: Validates WBS date range when creating/updating WBS
+- **Rule 301**: Validates confirmation status when confirming WBS
 
-### Rule 205: MATERIAL_USAGE_VALIDATION
-- **Control Point**: MATERIAL_USAGE
-- **Description**: Material usage date cannot be in the future and quantity cannot be negative
-- **Validation**: Ensures valid material usage entries
+#### PlanService
+- **Rule 101**: Validates backdating when creating plan versions
+- **Rule 201**: Validates plan version date when creating plan versions
+- **Rule 402**: Validates plan version date validity
 
-### Rule 301: CONFIRMATION_CANNOT_BE_OVERWRITTEN
-- **Control Point**: CONFIRMATION
-- **Description**: Confirmed entries cannot be modified or overwritten
-- **Validation**: Prevents modification of confirmed entries
+#### TaskUpdateService
+- **Rule 101**: Validates backdating when creating task updates
+- **Rule 102**: Validates backdating after lock date
+- **Rule 401**: Validates daily update quantity against planned quantity
 
-### Rule 401: DAILY_UPDATE_CANNOT_EXCEED_PLANNED_QTY
-- **Control Point**: TASK_UPDATE
-- **Description**: Daily update quantity cannot exceed the planned quantity
-- **Validation**: Prevents over-reporting of actual work done
+#### ConfirmationService
+- **Rule 301**: Validates that confirmed entries cannot be overwritten
 
-### Rule 402: PLAN_VERSION_DATE_VALIDATION
-- **Control Point**: PLAN_VERSION
-- **Description**: Plan version date must be valid and cannot be in the future
-- **Validation**: Ensures plan versions are created with valid dates
-
-### Rule 501: ALLOCATION_START_END_DATE_MUST_BE_VALID
-- **Control Point**: ALLOCATION
-- **Description**: Manpower allocation end date must be on or after the start date
-- **Validation**: Ensures valid allocation date ranges
-
-### Rule 601: ATTENDANCE_DATE_CANNOT_BE_IN_FUTURE
-- **Control Point**: ATTENDANCE
-- **Description**: Attendance date cannot be in the future
-- **Validation**: Attendance can only be posted for today or past dates
-
-## API Endpoints
-
-### List Business Rules
-```
-GET /api/business-rules
-```
-**Response:** List<BusinessRuleDTO>
-
-**Permissions:** `PAGE_BUSINESS_RULES_VIEW` or `PAGE_BUSINESS_RULES_EDIT`
-
-### Get Business Rule by ID
-```
-GET /api/business-rules/{id}
-```
-**Response:** BusinessRuleDTO
-
-**Permissions:** `PAGE_BUSINESS_RULES_VIEW` or `PAGE_BUSINESS_RULES_EDIT`
-
-### Get Business Rule by Number
-```
-GET /api/business-rules/by-number/{ruleNumber}
-```
-**Response:** BusinessRuleDTO
-
-**Permissions:** `PAGE_BUSINESS_RULES_VIEW` or `PAGE_BUSINESS_RULES_EDIT`
-
-### Get All Control Points
-```
-GET /api/business-rules/control-points
-```
-**Response:** List<String>
-
-**Permissions:** `PAGE_BUSINESS_RULES_VIEW` or `PAGE_BUSINESS_RULES_EDIT`
-
-### Create Business Rule
-```
-POST /api/business-rules
-Content-Type: application/json
-
-{
-  "ruleNumber": 101,
-  "controlPoint": "TASK_UPDATE",
-  "applicability": "Y",
-  "ruleValue": "7",
-  "description": "Maximum 7 days for backdating",
-  "activateFlag": true
-}
-```
-**Response:** BusinessRuleDTO (201 Created)
-
-**Permissions:** `PAGE_BUSINESS_RULES_EDIT` or `ROLE_SYSTEM_ADMIN`
-
-### Update Business Rule
-```
-PUT /api/business-rules/{id}
-Content-Type: application/json
-
-{
-  "ruleNumber": 101,
-  "controlPoint": "TASK_UPDATE",
-  "applicability": "Y",
-  "ruleValue": "10",
-  "description": "Maximum 10 days for backdating",
-  "activateFlag": true
-}
-```
-**Response:** BusinessRuleDTO
-
-**Permissions:** `PAGE_BUSINESS_RULES_EDIT` or `ROLE_SYSTEM_ADMIN`
-
-### Toggle Activate Flag
-```
-PUT /api/business-rules/{id}/activate-toggle
-```
-**Response:** BusinessRuleDTO (with toggled activateFlag)
-
-**Permissions:** `PAGE_BUSINESS_RULES_EDIT` or `ROLE_SYSTEM_ADMIN`
-
-**Description:** Toggles the `activate_flag` of a business rule. Useful for temporarily disabling rules without deleting them.
-
-### Delete Business Rule
-```
-DELETE /api/business-rules/{id}
-```
-**Response:** 204 No Content
-
-**Permissions:** `PAGE_BUSINESS_RULES_EDIT` or `ROLE_SYSTEM_ADMIN`
-
-## Using the Business Rule Engine
-
-### In Service Classes
-
-To use the Business Rule Engine in your services, inject `BusinessRuleEngine` and call `validate()`:
+### Usage Example
 
 ```java
 @Service
-public class TaskService {
+public class TaskUpdateService {
     
     private final BusinessRuleEngine businessRuleEngine;
     
-    public TaskService(BusinessRuleEngine businessRuleEngine) {
-        this.businessRuleEngine = businessRuleEngine;
-    }
-    
-    @Transactional
-    public TaskDTO updateTask(Long taskId, TaskUpdateDTO dto) {
+    public TaskUpdateDTO createTaskUpdate(TaskUpdateCreateDTO dto) {
         // Build context
         BusinessRuleContext context = BusinessRuleContext.builder()
             .tenantId(TenantContext.getTenantId())
             .userId(getCurrentUserId())
             .entityType("TASK_UPDATE")
-            .entityId(taskId)
             .updateDate(dto.getUpdateDate())
-            .plannedQty(dto.getPlannedQty())
-            .dailyUpdateQty(dto.getDailyUpdateQty())
+            .updateQty(dto.getDailyUpdateQty())
+            .plannedQty(task.getPlannedQty())
+            .lockDate(task.getLockDate())
             .build();
         
         // Validate rules
-        businessRuleEngine.validate(101, context); // Backdate rule
-        businessRuleEngine.validate(401, context); // Planned vs actual rule
+        businessRuleEngine.validateAll(
+            Arrays.asList(101, 102, 401), 
+            context
+        );
         
-        // Or validate multiple rules at once
-        businessRuleEngine.validateAll(Arrays.asList(101, 102, 401), context);
-        
-        // Proceed with update if validation passes
-        // ...
+        // Proceed with creation...
     }
 }
 ```
 
-### BusinessRuleContext Fields
+## API Endpoints
 
-The `BusinessRuleContext` supports the following fields:
+### Business Rules Management
 
-- **Tenant/User**: `tenantId`, `userId`
-- **Entity**: `entityType`, `entityId`
-- **Quantities**: `plannedQty`, `actualQty`, `updateQty`, `dailyUpdateQty`
-- **Dates**: `updateDate`, `confirmationDate`, `lockDate`, `taskStartDate`, `taskEndDate`, `wbsStartDate`, `wbsEndDate`, `allocationStartDate`, `allocationEndDate`, `attendanceDate`, `materialUsageDate`, `planVersionDate`
-- **Status**: `taskStatus`, `wbsStatus`, `confirmationStatus`, `isLocked`, `isConfirmed`
-- **Additional**: `additionalParams` (Map for custom parameters)
+- `GET /api/business-rules` - List all business rules for tenant
+- `GET /api/business-rules/{id}` - Get business rule by ID
+- `GET /api/business-rules/by-number/{ruleNumber}` - Get business rule by rule number
+- `GET /api/business-rules/control-points` - Get all control points
+- `POST /api/business-rules` - Create new business rule
+- `PUT /api/business-rules/{id}` - Update business rule
+- `PUT /api/business-rules/{id}/activate-toggle` - Toggle activate flag
+- `DELETE /api/business-rules/{id}` - Delete business rule
+- `POST /api/business-rules/validate-single` - Validate a single rule (for frontend pre-validation)
 
-### Rule Validation Flow
+### Response Format
 
-1. Service builds `BusinessRuleContext` with relevant data
-2. Service calls `businessRuleEngine.validate(ruleNumber, context)`
-3. Engine checks if rule exists and is active/applicable
-4. Engine routes to appropriate validator
-5. Validator throws `BusinessRuleException` if rule is violated
-6. Exception is caught and returned to client with rule number and message
+**BusinessRuleException Response (HTTP 400):**
+```json
+{
+  "type": "BUSINESS_RULE_VIOLATION",
+  "ruleNumber": 101,
+  "message": "Backdating is only allowed for 7 days. Attempted to backdate by 10 days.",
+  "hint": "You can only backdate up to 7 days from today."
+}
+```
 
-## Creating New Rules
+## Frontend Integration
+
+### Components
+
+1. **BusinessRules.jsx** - List page for managing business rules
+2. **BusinessRuleEdit.jsx** - Modal for creating/editing business rules
+3. **RuleViolationModal.jsx** - Modal that automatically displays when a rule is violated
+4. **RuleSummaryChip.jsx** - Small chip component showing rule status
+
+### Axios Interceptor
+
+The frontend automatically handles `BusinessRuleException` responses via an axios interceptor:
+
+```javascript
+// Automatically triggers RuleViolationModal
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 400 && 
+        error.response?.data?.type === 'BUSINESS_RULE_VIOLATION') {
+      // Dispatch custom event for RuleViolationModal
+      window.dispatchEvent(new CustomEvent('businessRuleViolation', {
+        detail: error.response.data
+      }));
+    }
+    return Promise.reject(error);
+  }
+);
+```
+
+## Adding New Rules
 
 ### Step 1: Create Validator
 
 ```java
 @Component
-public class MyCustomRuleValidator implements BusinessRuleValidator {
+public class MyNewRuleValidator implements BusinessRuleValidator {
     
     @Override
     public void validate(BusinessRule rule, BusinessRuleContext context) 
             throws BusinessRuleException {
-        // Your validation logic here
+        // Validation logic here
         if (/* violation condition */) {
             throw new BusinessRuleException(
                 rule.getRuleNumber(),
@@ -285,341 +267,186 @@ public class MyCustomRuleValidator implements BusinessRuleValidator {
     
     @Override
     public int[] getSupportedRuleNumbers() {
-        return new int[]{601}; // Your rule number
+        return new int[]{701}; // Your rule number
     }
 }
 ```
 
-### Step 2: Add Rule to Database
+### Step 2: Add Seed Data
 
-Create the rule via API or directly in database:
+Update `015-seed-business-rules.xml` or create a new migration:
 
-```sql
-INSERT INTO business_rules (tenant_id, rule_number, control_point, applicability, rule_value, description, activate_flag, created_by, created_on)
-VALUES (1, 601, 'CUSTOM_CONTROL_POINT', 'Y', 'value', 'Description', 1, 1, GETDATE());
+```xml
+<insert tableName="business_rules">
+    <column name="tenant_id" valueNumeric="1"/>
+    <column name="rule_number" valueNumeric="701"/>
+    <column name="control_point" value="YOUR_CONTROL_POINT"/>
+    <column name="applicability" value="Y"/>
+    <column name="rule_value" value=""/>
+    <column name="description" value="Your rule description"/>
+    <column name="activate_flag" valueBoolean="true"/>
+    <column name="created_by" valueNumeric="1"/>
+    <column name="created_on" valueComputed="CURRENT_TIMESTAMP"/>
+</insert>
 ```
 
-### Step 3: Use in Services
+### Step 3: Integrate in Service
 
 ```java
-businessRuleEngine.validate(601, context);
+// In your service method
+BusinessRuleContext context = BusinessRuleContext.builder()
+    .tenantId(TenantContext.getTenantId())
+    // ... set relevant fields
+    .build();
+
+businessRuleEngine.validate(701, context);
 ```
 
-## Rule Configuration
+## Use Cases
 
-### Applicability
-- **Y**: Rule is applicable and will be validated
-- **N**: Rule is not applicable and will be skipped
+### Use Case 1: Day-wise Update (Backdating)
 
-### Activate Flag
-- **true**: Rule is active
-- **false**: Rule is inactive (temporarily disabled)
+**Scenario**: User tries to create a task update with a date 10 days in the past.
 
-### Rule Value
-- Rule-specific value (e.g., number of days, Y/N flag, etc.)
-- Format depends on the rule
-- Can be empty if not needed
+**Rule Applied**: Rule 101 (BACKDATE_ALLOWED_TILL = 7 days)
 
-## Integration Points
+**Result**: 
+- `BusinessRuleException` thrown with rule number 101
+- Frontend displays `RuleViolationModal` with message and hint
+- Operation is blocked
 
-Rules should be validated in:
+### Use Case 2: Confirmation When Lock Exists
 
-- **TaskService**: Task creation, updates, date changes
-- **WbsService**: WBS creation, updates, date changes
-- **PlanService**: Plan version creation, updates
-- **TaskUpdateService**: Daily updates, backdating
-- **ConfirmationService**: Confirmation operations
-- **ResourceAllocationService**: Allocation creation, updates
-- **AttendanceService**: Attendance entry creation
-- **MaterialService**: Material usage entry creation
+**Scenario**: User tries to confirm a WBS that is already locked.
 
-## Error Handling
+**Rule Applied**: Rule 301 (CONFIRMATION_CANNOT_BE_OVERWRITTEN)
 
-When a rule is violated, `BusinessRuleException` is thrown with:
-- `ruleNumber`: The rule number that was violated
-- `message`: Error message
-- `hint`: User-friendly hint
+**Result**:
+- `BusinessRuleException` thrown with rule number 301
+- Frontend displays error modal
+- Operation is blocked
 
-The `GlobalExceptionHandler` converts this to a JSON response:
+### Use Case 3: Task Update Exceeds Planned Quantity
 
-```json
-{
-  "message": "Backdating is only allowed for 7 days. Attempted to backdate by 10 days.",
-  "ruleNumber": 101,
-  "hint": "You can only backdate up to 7 days from today.",
-  "type": "BUSINESS_RULE_VIOLATION"
-}
-```
+**Scenario**: User tries to update task with actual_qty = 150, but planned_qty = 100.
 
-## Frontend Components
+**Rule Applied**: Rule 401 (DAILY_UPDATE_CANNOT_EXCEED_PLANNED_QTY)
 
-### BusinessRules Page
-- List all business rules
-- Filter by control point
-- Active only toggle
-- Create/Edit/Delete operations
-- Activate/Deactivate toggle button
+**Result**:
+- `BusinessRuleException` thrown with rule number 401
+- Frontend displays error modal
+- Operation is blocked
 
-**Location:** `elina/frontend/src/pages/admin/BusinessRules.jsx`
+### Use Case 4: WBS End Date Before Start Date
 
-### BusinessRuleEdit Modal
-- Create/Edit form
-- Rule number, control point, applicability
-- Rule value and description
-- Active flag toggle
+**Scenario**: User tries to create WBS with start_date = 2025-01-31, end_date = 2025-01-01.
 
-**Location:** `elina/frontend/src/components/BusinessRuleEdit.jsx`
+**Rule Applied**: Rule 202 (END_DATE_CANNOT_BE_BEFORE_START_DATE)
 
-### RuleViolationModal Component
-- Automatically triggered when a BusinessRuleException is caught
-- Displays rule number, message, and hint
-- Global handler in App.jsx - works across all pages
-- Auto-closes after 10 seconds
+**Result**:
+- `BusinessRuleException` thrown with rule number 202
+- Frontend displays error modal
+- Operation is blocked
 
-**Location:** `elina/frontend/src/components/RuleViolationModal.jsx`
+### Use Case 5: Allocation End Date Before Start Date
 
-**Usage:** The modal is automatically triggered by the axios interceptor when a `BUSINESS_RULE_VIOLATION` error is received. No manual integration needed.
+**Scenario**: User tries to create allocation with start_date = 2025-02-01, end_date = 2025-01-15.
 
-### RuleSummaryChip Component
-- Small UI component showing rule summary
-- Displays rule number and active status
-- Optional description display
-- Can be used on pages that depend on specific rules
+**Rule Applied**: Rule 501 (ALLOCATION_START_END_DATE_MUST_BE_VALID)
 
-**Location:** `elina/frontend/src/components/RuleSummaryChip.jsx`
-
-**Example Usage:**
-```jsx
-import RuleSummaryChip from '../components/RuleSummaryChip'
-
-// In your component
-<RuleSummaryChip ruleNumber={101} showDescription={false} />
-```
-
-### Axios Interceptor
-- Automatically catches `BUSINESS_RULE_VIOLATION` errors
-- Dispatches `businessRuleViolation` custom event
-- Global RuleViolationModal listens and displays the error
-
-**Location:** `elina/frontend/src/services/api.js`
-
-**How it works:**
-1. Backend throws `BusinessRuleException`
-2. `GlobalExceptionHandler` converts to JSON with `type: "BUSINESS_RULE_VIOLATION"`
-3. Axios interceptor catches 400 with this type
-4. Dispatches `businessRuleViolation` event
-5. App.jsx listener shows `RuleViolationModal`
+**Result**:
+- `BusinessRuleException` thrown with rule number 501
+- Frontend displays error modal
+- Operation is blocked
 
 ## Testing
 
 ### Unit Tests
 
-```bash
-cd elina/backend
-mvn test -Dtest=BusinessRuleEngineTest
-mvn test -Dtest=BackdateRuleValidatorTest
-```
-
-## Security Considerations
-
-1. **Tenant Isolation**: All rules are tenant-scoped
-2. **Permission Checks**: 
-   - Read: `PAGE_BUSINESS_RULES_VIEW` or `PAGE_BUSINESS_RULES_EDIT`
-   - Write: `PAGE_BUSINESS_RULES_EDIT` or `ROLE_SYSTEM_ADMIN`
-3. **Audit Fields**: `created_by` and `updated_by` are automatically set from JWT user_id
-4. **Rule Number Uniqueness**: Enforced per tenant
-
-## Migration Files
-
-- `014-create-business-rules-table.xml`: Creates the business_rules table
-- `015-seed-business-rules.xml`: Seeds default business rules
-- `016-add-business-rules-permissions.xml`: Creates and assigns permissions
-
-These are Liquibase migrations located in `elina/backend/src/main/resources/db/changelog/changes/`
-
-## Service Integration Examples
-
-Example service implementations showing how to integrate business rule validation are available in:
-- `com.elina.authorization.service.example.TaskUpdateServiceExample` - Day-wise updates
-- `com.elina.authorization.service.example.WbsConfirmationServiceExample` - WBS confirmation
-- `com.elina.authorization.service.example.WbsServiceExample` - WBS creation/update
-- `com.elina.authorization.service.example.AllocationServiceExample` - Resource allocation
-- `com.elina.authorization.service.example.AttendanceServiceExample` - Attendance posting
-
-## Example: Integrating Rule Validation
-
-Here's a complete example of integrating rule validation in a service:
+Validators are unit tested in `BusinessRuleEngineTest.java`:
 
 ```java
-@Service
-public class TaskUpdateService {
+@Test
+void testBackdateRule_ExceedsAllowedDays() {
+    BusinessRuleContext context = BusinessRuleContext.builder()
+        .updateDate(LocalDate.now().minusDays(10))
+        .build();
     
-    private final BusinessRuleEngine businessRuleEngine;
-    private final TaskRepository taskRepository;
-    
-    @Transactional
-    public TaskUpdateDTO createTaskUpdate(TaskUpdateCreateDTO dto) {
-        Task task = taskRepository.findById(dto.getTaskId())
-            .orElseThrow(() -> new RuntimeException("Task not found"));
-        
-        // Build validation context
-        BusinessRuleContext context = BusinessRuleContext.builder()
-            .tenantId(TenantContext.getTenantId())
-            .userId(getCurrentUserId())
-            .entityType("TASK_UPDATE")
-            .entityId(dto.getTaskId())
-            .updateDate(dto.getUpdateDate())
-            .plannedQty(task.getPlannedQty())
-            .dailyUpdateQty(dto.getQuantity())
-            .actualQty(task.getActualQty())
-            .lockDate(task.getLockDate())
-            .isConfirmed(task.getIsConfirmed())
-            .build();
-        
-        // Validate all applicable rules
-        businessRuleEngine.validateAll(
-            Arrays.asList(101, 102, 301, 401), 
-            context
-        );
-        
-        // If we get here, all rules passed - proceed with update
-        TaskUpdate update = new TaskUpdate();
-        // ... set fields ...
-        return toDTO(taskUpdateRepository.save(update));
-    }
+    assertThrows(BusinessRuleException.class, 
+        () -> businessRuleEngine.validate(101, context));
 }
 ```
+
+### Integration Tests
+
+Service integration tests verify rule enforcement:
+
+```java
+@Test
+void testCreateTaskUpdate_BackdateExceedsLimit() {
+    TaskUpdateCreateDTO dto = new TaskUpdateCreateDTO();
+    dto.setUpdateDate(LocalDate.now().minusDays(10));
+    
+    assertThrows(BusinessRuleException.class, 
+        () -> taskUpdateService.createTaskUpdate(dto));
+}
+```
+
+## Performance Considerations
+
+- **Rule Caching**: Rules are cached per tenant to reduce database queries
+- **Lazy Validation**: Rules are only validated if they are active and applicable
+- **Batch Validation**: Use `validateAll()` to validate multiple rules in one call
 
 ## Troubleshooting
 
 ### Rule Not Being Validated
 
-1. Check rule is active: `activate_flag = true`
-2. Check applicability: `applicability = 'Y'`
-3. Verify validator is registered (check logs on startup)
-4. Check rule number matches validator's `getSupportedRuleNumbers()`
+1. Check if rule exists: `GET /api/business-rules/by-number/{ruleNumber}`
+2. Verify `applicability = 'Y'` and `activate_flag = true`
+3. Check if validator is registered (check logs for "Registered validator")
+4. Verify `BusinessRuleContext` has required fields
 
 ### Rule Validation Failing Unexpectedly
 
-1. Check rule value format (e.g., "7" not "7.0" for days)
-2. Verify context has all required fields
-3. Review validator logic for edge cases
-4. Check logs for validation details
+1. Check rule value format (e.g., Rule 101 expects numeric value)
+2. Verify context fields are set correctly
+3. Check validator logic matches rule description
 
-### Cache Issues
+### Frontend Not Showing Violation Modal
 
-Call `businessRuleEngine.refreshCache()` after creating/updating/deleting rules.
+1. Verify axios interceptor is checking for `type === 'BUSINESS_RULE_VIOLATION'`
+2. Check browser console for errors
+3. Verify `RuleViolationModal` is included in `App.jsx`
 
-## Integration Examples
+## Best Practices
 
-See `INTEGRATION_EXAMPLES.md` for detailed examples of:
-- Day-wise task update validation
-- WBS confirmation validation
-- Manpower allocation validation
-- Attendance posting validation
-- WBS creation with date validation
+1. **Always validate before persisting**: Call `businessRuleEngine.validate()` before saving to database
+2. **Build complete context**: Include all relevant fields in `BusinessRuleContext`
+3. **Use descriptive messages**: Provide clear error messages and hints
+4. **Test edge cases**: Test with null values, boundary conditions, etc.
+5. **Document rule purpose**: Always include clear descriptions in seed data
+6. **Version control**: Track rule changes in migration files
 
-## Frontend Integration
+## Migration Guide
 
-### Automatic Rule Violation Handling
+### Updating Existing Rules
 
-The frontend automatically handles business rule violations:
+1. Create new Liquibase migration
+2. Update rule in database
+3. Call `businessRuleEngine.refreshCache()` to clear cache
+4. Update validator if rule logic changes
 
-1. **Axios Interceptor** (`api.js`):
-   - Catches `BUSINESS_RULE_VIOLATION` errors
-   - Dispatches `businessRuleViolation` event
+### Deprecating Rules
 
-2. **Global Modal** (`App.jsx`):
-   - Listens for `businessRuleViolation` events
-   - Displays `RuleViolationModal` automatically
+1. Set `applicability = 'N'` or `activate_flag = false`
+2. Remove validator registration (optional)
+3. Document deprecation in migration comments
 
-3. **No Manual Integration Needed**:
-   - Just make API calls normally
-   - If a rule is violated, the modal appears automatically
+## Support
 
-### Using RuleSummaryChip
-
-Display rule status on pages:
-
-```jsx
-import RuleSummaryChip from '../components/RuleSummaryChip'
-
-function TaskUpdatePage() {
-  return (
-    <div>
-      <h1>Create Task Update</h1>
-      <RuleSummaryChip ruleNumber={101} />
-      <RuleSummaryChip ruleNumber={401} showDescription={true} />
-      {/* Your form here */}
-    </div>
-  )
-}
-```
-
-## Frontend Components
-
-### RuleViolationModal
-Automatically displays when a business rule is violated. Listens to the `businessRuleViolation` custom event dispatched by the axios interceptor.
-
-**Location:** `elina/frontend/src/components/RuleViolationModal.jsx`
-
-**Usage:** Already integrated in `App.jsx` - works globally across all pages.
-
-### RuleSummaryChip
-Small UI component showing rule summary for pages that depend on specific rules.
-
-**Location:** `elina/frontend/src/components/RuleSummaryChip.jsx`
-
-**Usage:**
-```jsx
-import RuleSummaryChip from '../components/RuleSummaryChip'
-
-// In your component
-<RuleSummaryChip ruleNumber={101} />
-```
-
-### Business Rules List Page
-Full-featured page for managing business rules with:
-- Search by rule number, description, or control point
-- Filter by control point
-- Active only toggle
-- Activate/Deactivate toggle
-- Edit and Delete actions
-
-**Location:** `elina/frontend/src/pages/admin/BusinessRules.jsx`
-
-## Sample Use Cases Implemented
-
-1. **Day-wise update (update_date older than allowed)**
-   - Example: `TaskUpdateServiceExample.createDayWiseUpdate()`
-   - Validates: Rule 101 (BACKDATE_ALLOWED_TILL), Rule 401 (DAILY_UPDATE_CANNOT_EXCEED_PLANNED_QTY), Rule 201 (START_DATE_CANNOT_BE_IN_FUTURE)
-
-2. **Confirmation when lock exists**
-   - Example: `WbsConfirmationServiceExample.confirmWbs()`
-   - Validates: Rule 301 (CONFIRMATION_CANNOT_BE_OVERWRITTEN)
-
-3. **Task update actual_qty > plan_qty**
-   - Example: `TaskUpdateServiceExample.createDayWiseUpdate()`
-   - Validates: Rule 401 (DAILY_UPDATE_CANNOT_EXCEED_PLANNED_QTY)
-
-4. **WBS end_date before start_date**
-   - Example: `WbsServiceExample.createOrUpdateWbs()`
-   - Validates: Rule 202 (WBS_DATE_RANGE_VALIDATION)
-
-5. **Manpower allocation end_date < start_date**
-   - Example: `AllocationServiceExample.createAllocation()`
-   - Validates: Rule 501 (ALLOCATION_START_END_DATE_MUST_BE_VALID)
-
-6. **Attendance date in future**
-   - Example: `AttendanceServiceExample.postAttendance()`
-   - Validates: Rule 601 (ATTENDANCE_DATE_CANNOT_BE_IN_FUTURE)
-
-## Future Enhancements
-
-- [ ] Rule dependency management (rule A depends on rule B)
-- [ ] Rule execution order configuration
-- [ ] Rule performance metrics
-- [ ] Rule violation logging (optional)
-- [ ] Rule templates for common patterns
-- [ ] Visual rule builder UI
-
+For questions or issues:
+1. Check this documentation
+2. Review validator implementations
+3. Check service integration examples
+4. Review test cases for usage patterns

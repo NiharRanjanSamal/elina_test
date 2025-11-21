@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <!--
+        Add Projects Management permissions for DEFAULT tenant (tenant_id = 1).
+        These permissions control access to the Projects, WBS, Tasks, Plans, and related modules.
+    -->
+
+    <changeSet id="024-add-projects-permissions" author="projects-module">
+        
+        <!-- PAGE_PROJECTS_VIEW permission -->
+        <insert tableName="permissions">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code" value="PAGE_PROJECTS_VIEW"/>
+            <column name="name" value="View Projects"/>
+            <column name="description" value="Permission to view and read projects, WBS, tasks, plans, and related data. Required for accessing the Projects module pages and viewing project information."/>
+            <column name="resource_type" value="PAGE"/>
+            <column name="action" value="VIEW"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- PAGE_PROJECTS_EDIT permission -->
+        <insert tableName="permissions">
+            <column name="tenant_id" valueNumeric="1"/>
+            <column name="code" value="PAGE_PROJECTS_EDIT"/>
+            <column name="name" value="Edit Projects"/>
+            <column name="description" value="Permission to create, update, and delete projects, WBS, tasks, plans, task updates, and confirmations. Includes all write operations in the Projects module."/>
+            <column name="resource_type" value="PAGE"/>
+            <column name="action" value="EDIT"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Assign PAGE_PROJECTS_VIEW to SYSTEM_ADMIN role (assuming role_id = 1) -->
+        <sql>
+            INSERT INTO role_permissions (role_id, permission_id, created_at)
+            SELECT 1, id, CURRENT_TIMESTAMP
+            FROM permissions
+            WHERE tenant_id = 1 AND code = 'PAGE_PROJECTS_VIEW'
+            AND NOT EXISTS (
+                SELECT 1 FROM role_permissions rp 
+                WHERE rp.role_id = 1 AND rp.permission_id = permissions.id
+            );
+        </sql>
+
+        <!-- Assign PAGE_PROJECTS_EDIT to SYSTEM_ADMIN role (assuming role_id = 1) -->
+        <sql>
+            INSERT INTO role_permissions (role_id, permission_id, created_at)
+            SELECT 1, id, CURRENT_TIMESTAMP
+            FROM permissions
+            WHERE tenant_id = 1 AND code = 'PAGE_PROJECTS_EDIT'
+            AND NOT EXISTS (
+                SELECT 1 FROM role_permissions rp 
+                WHERE rp.role_id = 1 AND rp.permission_id = permissions.id
+            );
+        </sql>
+
+    </changeSet>
+
+</databaseChangeLog>
+

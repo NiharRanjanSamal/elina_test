@@ -97,6 +97,55 @@ public class PlanController {
     }
 
     /**
+     * Set a plan version as active.
+     * Requires: PAGE_PROJECTS_EDIT
+     */
+    @PutMapping("/{id}/activate")
+    @PreAuthorize("hasAuthority('PAGE_PROJECTS_EDIT') or hasAuthority('ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<PlanVersionDTO> setActiveVersion(@PathVariable Long id) {
+        PlanVersionDTO result = planService.setActiveVersion(id);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Get plan version details with lines.
+     * Requires: PAGE_PROJECTS_VIEW or higher
+     */
+    @GetMapping("/{id}/details")
+    public ResponseEntity<PlanVersionDTO> getPlanVersionDetails(@PathVariable Long id) {
+        if (!hasPermission("PAGE_PROJECTS_VIEW") && !hasPermission("PAGE_PROJECTS_EDIT")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        PlanVersionDTO result = planService.getPlanVersionDetails(id);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Create or update plan lines for a version.
+     * Requires: PAGE_PROJECTS_EDIT
+     */
+    @PutMapping("/{id}/lines")
+    @PreAuthorize("hasAuthority('PAGE_PROJECTS_EDIT') or hasAuthority('ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<PlanVersionDTO> createOrUpdatePlanLines(
+            @PathVariable Long id,
+            @Valid @RequestBody List<PlanLineCreateDTO> lines) {
+        PlanVersionDTO result = planService.createOrUpdatePlanLines(id, lines, null);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Delete a plan version.
+     * Requires: PAGE_PROJECTS_EDIT
+     */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('PAGE_PROJECTS_EDIT') or hasAuthority('ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<Void> deletePlanVersion(@PathVariable Long id) {
+        planService.deletePlanVersion(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
      * Revert to a plan version.
      * Requires: PAGE_PROJECTS_EDIT
      */
@@ -104,6 +153,34 @@ public class PlanController {
     @PreAuthorize("hasAuthority('PAGE_PROJECTS_EDIT') or hasAuthority('ROLE_SYSTEM_ADMIN')")
     public ResponseEntity<PlanVersionDTO> revertToPlanVersion(@PathVariable Long id) {
         PlanVersionDTO result = planService.revertToPlanVersion(id);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Create plan version using one of three modes: DAILY_ENTRY, DATE_RANGE_SPLIT, or SINGLE_LINE_QUICK.
+     * Requires: PAGE_PROJECTS_EDIT
+     */
+    @PostMapping("/create-with-mode")
+    @PreAuthorize("hasAuthority('PAGE_PROJECTS_EDIT') or hasAuthority('ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<PlanVersionDTO> createPlanVersionWithMode(
+            @Valid @RequestBody PlanCreationModeDTO dto) {
+        PlanVersionDTO result = planService.createPlanVersionWithMode(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
+    }
+
+    /**
+     * Compare two plan versions.
+     * Requires: PAGE_PROJECTS_VIEW or higher
+     */
+    @GetMapping("/compare/{versionId1}/{versionId2}")
+    public ResponseEntity<PlanVersionComparisonDTO> comparePlanVersions(
+            @PathVariable Long versionId1,
+            @PathVariable Long versionId2) {
+        if (!hasPermission("PAGE_PROJECTS_VIEW") && !hasPermission("PAGE_PROJECTS_EDIT")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        PlanVersionComparisonDTO result = planService.comparePlanVersions(versionId1, versionId2);
         return ResponseEntity.ok(result);
     }
 }

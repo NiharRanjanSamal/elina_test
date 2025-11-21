@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <!--
+        Assign work center and cost center authorizations to admin user.
+        This allows the admin user to access all WBS, tasks, and plans that have work center/cost center restrictions.
+        
+        The migration:
+        1. Gets the admin user ID (admin@example.com, tenant_id = 1)
+        2. Creates UserAuthorization records for all distinct work centers and cost centers from WBS table
+        3. Assigns FULL permission type to allow complete access
+    -->
+
+    <changeSet id="025-assign-admin-work-center-authorizations" author="projects-module">
+        
+        <!-- Insert work center authorizations for all distinct work centers from WBS -->
+        <sql>
+            INSERT INTO user_authorizations (user_id, resource_type, resource_id, permission_type, is_allowed, created_at, updated_at)
+            SELECT DISTINCT
+                (SELECT id FROM users WHERE email = 'admin@example.com' AND tenant_id = 1),
+                'WORK_CENTER',
+                w.work_center,
+                'FULL',
+                1,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
+            FROM wbs w
+            WHERE w.tenant_id = 1
+                AND w.work_center IS NOT NULL
+                AND w.work_center != ''
+                AND NOT EXISTS (
+                    SELECT 1 
+                    FROM user_authorizations ua 
+                    WHERE ua.user_id = (SELECT id FROM users WHERE email = 'admin@example.com' AND tenant_id = 1)
+                        AND ua.resource_type = 'WORK_CENTER' 
+                        AND ua.resource_id = w.work_center
+                );
+        </sql>
+        
+        <!-- Insert cost center authorizations for all distinct cost centers from WBS -->
+        <sql>
+            INSERT INTO user_authorizations (user_id, resource_type, resource_id, permission_type, is_allowed, created_at, updated_at)
+            SELECT DISTINCT
+                (SELECT id FROM users WHERE email = 'admin@example.com' AND tenant_id = 1),
+                'COST_CENTER',
+                w.cost_center,
+                'FULL',
+                1,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
+            FROM wbs w
+            WHERE w.tenant_id = 1
+                AND w.cost_center IS NOT NULL
+                AND w.cost_center != ''
+                AND NOT EXISTS (
+                    SELECT 1 
+                    FROM user_authorizations ua 
+                    WHERE ua.user_id = (SELECT id FROM users WHERE email = 'admin@example.com' AND tenant_id = 1)
+                        AND ua.resource_type = 'COST_CENTER' 
+                        AND ua.resource_id = w.cost_center
+                );
+        </sql>
+        
+    </changeSet>
+
+</databaseChangeLog>
+

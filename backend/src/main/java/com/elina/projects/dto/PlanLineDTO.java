@@ -16,12 +16,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PlanLineDTO {
-    private Long lineId;
+    private Long planLineId;
     private Long tenantId;
-    private Long versionId;
+    private Long planVersionId;
     private Long taskId;
     private Integer lineNumber;
-    private LocalDate plannedDate;
+    private LocalDate workDate;
     private BigDecimal plannedQty;
     private String description;
     private Boolean activateFlag;

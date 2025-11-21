@@ -10,6 +10,7 @@ import com.elina.projects.dto.*;
 import com.elina.projects.entity.Project;
 import com.elina.projects.entity.Task;
 import com.elina.projects.entity.Wbs;
+import com.elina.projects.exception.NotFoundException;
 import com.elina.projects.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -133,11 +134,11 @@ public class TaskService {
     public TaskDTO getTask(Long id) {
         Long tenantId = TenantContext.getTenantId();
         Task entity = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new NotFoundException("Task not found"));
         
         // Verify tenant ownership
         if (!entity.getTenant().getId().equals(tenantId)) {
-            throw new RuntimeException("Task not found");
+            throw new NotFoundException("Task not found");
         }
         
         return toDTO(entity);
@@ -183,13 +184,13 @@ public class TaskService {
      */
     private PlanVersionDTO toPlanVersionDTO(com.elina.projects.entity.PlanVersion entity) {
         PlanVersionDTO dto = new PlanVersionDTO();
-        dto.setVersionId(entity.getVersionId());
+        dto.setPlanVersionId(entity.getPlanVersionId());
         dto.setTenantId(entity.getTenant().getId());
         dto.setTaskId(entity.getTask().getTaskId());
-        dto.setVersionNumber(entity.getVersionNumber());
+        dto.setVersionNo(entity.getVersionNo());
         dto.setVersionDate(entity.getVersionDate());
         dto.setDescription(entity.getDescription());
-        dto.setIsCurrent(entity.getIsCurrent());
+        dto.setIsActive(entity.getIsActive());
         dto.setActivateFlag(entity.getActivateFlag());
         dto.setCreatedBy(entity.getCreatedBy());
         dto.setCreatedOn(entity.getCreatedOn());
@@ -227,10 +228,10 @@ public class TaskService {
         Long tenantId = TenantContext.getTenantId();
 
         Wbs wbs = wbsRepository.findById(wbsId)
-                .orElseThrow(() -> new RuntimeException("WBS not found"));
+                .orElseThrow(() -> new NotFoundException("WBS not found"));
         
         if (!wbs.getTenant().getId().equals(tenantId)) {
-            throw new RuntimeException("WBS not found");
+            throw new NotFoundException("WBS not found");
         }
 
         List<Task> tasks = taskRepository.findByWbsId(wbsId, true);
@@ -254,10 +255,10 @@ public class TaskService {
         }
 
         Wbs wbs = wbsRepository.findById(dto.getWbsId())
-                .orElseThrow(() -> new RuntimeException("WBS not found"));
+                .orElseThrow(() -> new NotFoundException("WBS not found"));
         
         if (!wbs.getTenant().getId().equals(tenantId)) {
-            throw new RuntimeException("WBS not found");
+            throw new NotFoundException("WBS not found");
         }
 
         // Verify WBS belongs to project
@@ -359,11 +360,11 @@ public class TaskService {
         Long userId = getCurrentUserId();
 
         Task entity = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new NotFoundException("Task not found"));
 
         // Verify tenant ownership
         if (!entity.getTenant().getId().equals(tenantId)) {
-            throw new RuntimeException("Task not found");
+            throw new NotFoundException("Task not found");
         }
 
         // Validate Rule 301: CONFIRMATION_CANNOT_BE_OVERWRITTEN
@@ -485,11 +486,11 @@ public class TaskService {
         Long tenantId = TenantContext.getTenantId();
 
         Task entity = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new NotFoundException("Task not found"));
 
         // Verify tenant ownership
         if (!entity.getTenant().getId().equals(tenantId)) {
-            throw new RuntimeException("Task not found");
+            throw new NotFoundException("Task not found");
         }
 
         // Prepare old data for audit

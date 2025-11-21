@@ -19,8 +19,10 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "plan_lines", indexes = {
     @Index(name = "idx_plan_lines_tenant_id", columnList = "tenant_id"),
-    @Index(name = "idx_plan_lines_version_id", columnList = "tenant_id,version_id"),
+    @Index(name = "idx_plan_lines_version_work_date", columnList = "plan_version_id,work_date"),
     @Index(name = "idx_plan_lines_task_id", columnList = "tenant_id,task_id")
+}, uniqueConstraints = {
+    @UniqueConstraint(name = "uk_plan_lines_version_date", columnNames = {"plan_version_id", "work_date"})
 })
 @Data
 @NoArgsConstructor
@@ -29,15 +31,15 @@ public class PlanLine {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "line_id")
-    private Long lineId;
+    @Column(name = "plan_line_id")
+    private Long planLineId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id", nullable = false)
     private Tenant tenant;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "version_id", nullable = false)
+    @JoinColumn(name = "plan_version_id", nullable = false)
     private PlanVersion planVersion;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -47,8 +49,8 @@ public class PlanLine {
     @Column(name = "line_number", nullable = false)
     private Integer lineNumber;
 
-    @Column(name = "planned_date", nullable = false)
-    private LocalDate plannedDate;
+    @Column(name = "work_date", nullable = false)
+    private LocalDate workDate;
 
     @Column(name = "planned_qty", precision = 18, scale = 2, nullable = false)
     private BigDecimal plannedQty;
