@@ -16,10 +16,7 @@ import com.elina.projects.repository.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -48,7 +45,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @Transactional
 @org.springframework.test.annotation.DirtiesContext(classMode = org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER_CLASS)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class PlanControllerIntegrationTest {
 
     @Autowired
@@ -317,8 +313,16 @@ class PlanControllerIntegrationTest {
     // ========== SINGLE LINE QUICK MODE ==========
 
     @Test
-    @Order(100) // Run this test last to avoid test isolation issues
     void testCreatePlanVersion_SingleLineQuickMode_Success() throws Exception {
+        // Regenerate token to ensure it's fresh and valid for this test
+        // This helps avoid token expiration or stale token issues when running all tests
+        List<String> roles = new ArrayList<>();
+        roles.add("ROLE_SYSTEM_ADMIN");
+        List<String> permissions = new ArrayList<>();
+        permissions.add("PAGE_PROJECTS_VIEW");
+        permissions.add("PAGE_PROJECTS_EDIT");
+        String freshToken = tokenProvider.generateToken(user.getId(), tenant.getId(), roles, permissions);
+        
         Map<String, Object> payload = new HashMap<>();
         payload.put("taskId", task.getTaskId());
         payload.put("versionDate", LocalDate.now().toString());
@@ -332,7 +336,7 @@ class PlanControllerIntegrationTest {
         payload.put("singleLine", singleLine);
 
         mockMvc.perform(post("/api/plans/create-with-mode")
-                .header("Authorization", "Bearer " + authToken)
+                .header("Authorization", "Bearer " + freshToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(payload)))
                 .andExpect(status().isCreated())

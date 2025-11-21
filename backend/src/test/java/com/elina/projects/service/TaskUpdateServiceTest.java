@@ -23,6 +23,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+
 /**
  * Unit tests for TaskUpdateService.
  * 
@@ -92,7 +95,7 @@ class TaskUpdateServiceTest {
     void testSaveOrUpdateDayWise_WithRule401Violation_ShouldThrowException() {
         // Arrange
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
-        when(confirmationRepository.findByEntityTypeAndEntityId("WBS", any())).thenReturn(Optional.empty());
+        lenient().when(confirmationRepository.findByEntityTypeAndEntityId(eq("WBS"), any())).thenReturn(Optional.empty());
 
         TaskUpdateBulkDTO bulkDTO = new TaskUpdateBulkDTO();
         bulkDTO.setTaskId(1L);
@@ -122,7 +125,7 @@ class TaskUpdateServiceTest {
     void testSaveOrUpdateDayWise_WithDateOutsideTaskRange_ShouldThrowException() {
         // Arrange
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
-        when(confirmationRepository.findByEntityTypeAndEntityId("WBS", any())).thenReturn(Optional.empty());
+        lenient().when(confirmationRepository.findByEntityTypeAndEntityId(eq("WBS"), any())).thenReturn(Optional.empty());
 
         TaskUpdateBulkDTO bulkDTO = new TaskUpdateBulkDTO();
         bulkDTO.setTaskId(1L);
@@ -145,6 +148,10 @@ class TaskUpdateServiceTest {
     @Test
     void testSaveOrUpdateDayWise_WithLockedDate_ShouldThrowException() {
         // Arrange
+        Wbs wbs = new Wbs();
+        wbs.setWbsId(1L);
+        task.setWbs(wbs);
+        
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
 
         // Create confirmation lock
@@ -154,7 +161,7 @@ class TaskUpdateServiceTest {
         confirmation.setEntityId(1L);
         confirmation.setConfirmationDate(LocalDate.of(2025, 11, 10)); // Locks date 2025-11-10 and earlier
 
-        when(confirmationRepository.findByEntityTypeAndEntityId("WBS", any())).thenReturn(Optional.of(confirmation));
+        when(confirmationRepository.findByEntityTypeAndEntityId(eq("WBS"), eq(1L))).thenReturn(Optional.of(confirmation));
 
         TaskUpdateBulkDTO bulkDTO = new TaskUpdateBulkDTO();
         bulkDTO.setTaskId(1L);
@@ -182,7 +189,7 @@ class TaskUpdateServiceTest {
     void testSaveOrUpdateDayWise_WithValidData_ShouldSaveSuccessfully() {
         // Arrange
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
-        when(confirmationRepository.findByEntityTypeAndEntityId("WBS", any())).thenReturn(Optional.empty());
+        lenient().when(confirmationRepository.findByEntityTypeAndEntityId(eq("WBS"), any())).thenReturn(Optional.empty());
         when(taskUpdateRepository.findByTaskIdAndUpdateDate(anyLong(), any())).thenReturn(Optional.empty());
         when(taskUpdateRepository.getTotalActualQtyByTaskId(anyLong())).thenReturn(new BigDecimal("10.00"));
 
@@ -216,6 +223,10 @@ class TaskUpdateServiceTest {
     @Test
     void testDeleteTaskUpdate_WithLockedDate_ShouldThrowException() {
         // Arrange
+        Wbs wbs = new Wbs();
+        wbs.setWbsId(1L);
+        task.setWbs(wbs);
+        
         TaskUpdate update = new TaskUpdate();
         update.setUpdateId(1L);
         update.setTask(task);
@@ -227,7 +238,7 @@ class TaskUpdateServiceTest {
         // Create confirmation lock
         Confirmation confirmation = new Confirmation();
         confirmation.setConfirmationDate(LocalDate.of(2025, 11, 10));
-        when(confirmationRepository.findByEntityTypeAndEntityId("WBS", any())).thenReturn(Optional.of(confirmation));
+        when(confirmationRepository.findByEntityTypeAndEntityId(eq("WBS"), eq(1L))).thenReturn(Optional.of(confirmation));
 
         // Mock Rule 102 to throw exception
         doThrow(new BusinessRuleException(102, "Cannot delete update for locked date"))
@@ -246,7 +257,7 @@ class TaskUpdateServiceTest {
     void testSaveOrUpdateDayWise_WithRule101Violation_ShouldThrowException() {
         // Arrange
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
-        when(confirmationRepository.findByEntityTypeAndEntityId("WBS", any())).thenReturn(Optional.empty());
+        lenient().when(confirmationRepository.findByEntityTypeAndEntityId(eq("WBS"), any())).thenReturn(Optional.empty());
 
         TaskUpdateBulkDTO bulkDTO = new TaskUpdateBulkDTO();
         bulkDTO.setTaskId(1L);
@@ -299,7 +310,7 @@ class TaskUpdateServiceTest {
         when(taskUpdateRepository.findByTaskIdOrderByUpdateDate(1L, true))
                 .thenReturn(Arrays.asList(existingUpdate));
 
-        when(confirmationRepository.findByEntityTypeAndEntityId("WBS", any())).thenReturn(Optional.empty());
+        lenient().when(confirmationRepository.findByEntityTypeAndEntityId(eq("WBS"), any())).thenReturn(Optional.empty());
 
         // Act
         List<TaskUpdateDayWiseDTO> result = taskUpdateService.getUpdatesForTask(1L);
@@ -318,7 +329,7 @@ class TaskUpdateServiceTest {
         when(planVersionRepository.findCurrentByTaskId(1L)).thenReturn(Optional.empty());
         when(taskUpdateRepository.findByTaskIdOrderByUpdateDate(1L, true))
                 .thenReturn(Collections.emptyList());
-        when(confirmationRepository.findByEntityTypeAndEntityId("WBS", any())).thenReturn(Optional.empty());
+        lenient().when(confirmationRepository.findByEntityTypeAndEntityId(eq("WBS"), any())).thenReturn(Optional.empty());
 
         // Act
         List<TaskUpdateDayWiseDTO> result = taskUpdateService.getUpdatesForTask(1L);
@@ -368,7 +379,7 @@ class TaskUpdateServiceTest {
     void testSaveOrUpdateDayWise_WithMultipleUpdates_ShouldSaveAll() {
         // Arrange
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
-        when(confirmationRepository.findByEntityTypeAndEntityId("WBS", any())).thenReturn(Optional.empty());
+        lenient().when(confirmationRepository.findByEntityTypeAndEntityId(eq("WBS"), any())).thenReturn(Optional.empty());
         when(taskUpdateRepository.findByTaskIdAndUpdateDate(anyLong(), any())).thenReturn(Optional.empty());
         when(taskUpdateRepository.getTotalActualQtyByTaskId(anyLong())).thenReturn(new BigDecimal("30.00"));
 
@@ -419,7 +430,7 @@ class TaskUpdateServiceTest {
     void testSaveOrUpdateDayWise_WithExistingUpdate_ShouldUpdate() {
         // Arrange
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
-        when(confirmationRepository.findByEntityTypeAndEntityId("WBS", any())).thenReturn(Optional.empty());
+        lenient().when(confirmationRepository.findByEntityTypeAndEntityId(eq("WBS"), any())).thenReturn(Optional.empty());
 
         TaskUpdate existingUpdate = new TaskUpdate();
         existingUpdate.setUpdateId(1L);
@@ -434,6 +445,9 @@ class TaskUpdateServiceTest {
 
         TaskUpdate savedUpdate = new TaskUpdate();
         savedUpdate.setUpdateId(1L);
+        savedUpdate.setTask(task);
+        savedUpdate.setTenant(tenant);
+        savedUpdate.setUpdateDate(LocalDate.of(2025, 11, 5));
         savedUpdate.setActualQty(new BigDecimal("10.00"));
         when(taskUpdateRepository.save(any())).thenReturn(savedUpdate);
 
@@ -466,7 +480,7 @@ class TaskUpdateServiceTest {
         update.setUpdateDate(LocalDate.of(2025, 10, 1)); // Very old date
 
         when(taskUpdateRepository.findById(1L)).thenReturn(Optional.of(update));
-        when(confirmationRepository.findByEntityTypeAndEntityId("WBS", any())).thenReturn(Optional.empty());
+        lenient().when(confirmationRepository.findByEntityTypeAndEntityId(eq("WBS"), any())).thenReturn(Optional.empty());
 
         // Mock Rule 101 to throw exception (backdate too old)
         doThrow(new BusinessRuleException(101, "Cannot delete update - backdate too old"))
@@ -491,7 +505,7 @@ class TaskUpdateServiceTest {
         update.setUpdateDate(LocalDate.of(2025, 11, 5));
 
         when(taskUpdateRepository.findById(1L)).thenReturn(Optional.of(update));
-        when(confirmationRepository.findByEntityTypeAndEntityId("WBS", any())).thenReturn(Optional.empty());
+        lenient().when(confirmationRepository.findByEntityTypeAndEntityId(eq("WBS"), any())).thenReturn(Optional.empty());
         when(taskUpdateRepository.getTotalActualQtyByTaskId(anyLong())).thenReturn(BigDecimal.ZERO);
 
         // Act
@@ -518,7 +532,7 @@ class TaskUpdateServiceTest {
         // Create confirmation lock
         Confirmation confirmation = new Confirmation();
         confirmation.setConfirmationDate(LocalDate.of(2025, 11, 10));
-        when(confirmationRepository.findByEntityTypeAndEntityId("WBS", 1L))
+        when(confirmationRepository.findByEntityTypeAndEntityId(eq("WBS"), eq(1L)))
                 .thenReturn(Optional.of(confirmation));
 
         // Act

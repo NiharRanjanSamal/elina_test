@@ -59,7 +59,7 @@ const TaskUpdates = () => {
   const fetchPlanVersion = async () => {
     try {
       // Fetch plan versions for this task
-      const response = await api.get(`/api/plan-versions/task/${taskId}`)
+      const response = await api.get(`/api/plans/task/${taskId}`)
       const versions = response.data || []
       // Find active plan version
       const active = versions.find(v => v.isActive && v.activateFlag)
