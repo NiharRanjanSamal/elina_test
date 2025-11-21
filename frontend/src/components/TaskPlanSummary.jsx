@@ -42,7 +42,7 @@ const TaskPlanSummary = ({ taskId }) => {
       // Fetch task updates to get total actual
       let totalActual = 0
       try {
-        const updatesResponse = await api.get(`/api/tasks/${taskId}/updates`)
+        const updatesResponse = await api.get(`/api/task-updates/task/${taskId}`)
         const updates = updatesResponse.data || []
         totalActual = updates.reduce((sum, update) => sum + (parseFloat(update.actualQty) || 0), 0)
       } catch (err) {

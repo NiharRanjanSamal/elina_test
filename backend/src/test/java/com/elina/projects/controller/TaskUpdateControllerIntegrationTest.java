@@ -1,8 +1,11 @@
 package com.elina.projects.controller;
 
 import com.elina.authorization.context.TenantContext;
+import com.elina.authorization.entity.BusinessRule;
 import com.elina.authorization.entity.Tenant;
 import com.elina.authorization.entity.User;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.elina.authorization.repository.BusinessRuleRepository;
 import com.elina.authorization.repository.TenantRepository;
 import com.elina.authorization.repository.UserRepository;
 import com.elina.authorization.security.JwtTokenProvider;
@@ -84,6 +87,9 @@ class TaskUpdateControllerIntegrationTest {
     @Autowired
     private PlanLineRepository planLineRepository;
 
+    @Autowired
+    private BusinessRuleRepository businessRuleRepository;
+
     // Note: confirmationRepository not used in these tests but available if needed
 
     private Tenant tenant;
@@ -164,6 +170,7 @@ class TaskUpdateControllerIntegrationTest {
     @AfterEach
     void tearDown() {
         TenantContext.clear();
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -177,7 +184,7 @@ class TaskUpdateControllerIntegrationTest {
     @Test
     void testGetUpdatesForTask_Unauthorized() throws Exception {
         mockMvc.perform(get("/api/task-updates/task/" + task.getTaskId()))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden()); // Spring Security returns 403 for anonymous requests
     }
 
     @Test
@@ -204,6 +211,18 @@ class TaskUpdateControllerIntegrationTest {
 
     @Test
     void testSaveOrUpdateDayWise_WithActualExceedingPlan_ShouldFail() throws Exception {
+        // Create Rule 401 for this tenant to enforce validation
+        BusinessRule rule401 = new BusinessRule();
+        rule401.setTenant(tenant);
+        rule401.setRuleNumber(401);
+        rule401.setControlPoint("TASK_UPDATE");
+        rule401.setApplicability("Y");
+        rule401.setRuleValue("ENFORCE");
+        rule401.setDescription("Daily update cannot exceed planned quantity");
+        rule401.setActivateFlag(true);
+        rule401.setCreatedBy(user.getId());
+        businessRuleRepository.save(rule401);
+
         TaskUpdateBulkDTO bulkDTO = new TaskUpdateBulkDTO();
         bulkDTO.setTaskId(task.getTaskId());
 
@@ -214,8 +233,7 @@ class TaskUpdateControllerIntegrationTest {
 
         bulkDTO.setUpdates(Arrays.asList(dayUpdate));
 
-        // Note: This will fail if Rule 401 is active and enforced
-        // The exact status depends on business rule configuration
+        // This should fail because Rule 401 is active and enforced
         mockMvc.perform(post("/api/task-updates/task/" + task.getTaskId())
                 .header("Authorization", "Bearer " + authToken)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -340,7 +358,7 @@ class TaskUpdateControllerIntegrationTest {
                 .andExpect(jsonPath("$[?(@.updateDate == '2025-11-05')].planQty").value(12.00))
                 .andExpect(jsonPath("$[?(@.updateDate == '2025-11-05')].actualQty").value(11.00))
                 .andExpect(jsonPath("$[?(@.updateDate == '2025-11-06')].planQty").value(15.00))
-                .andExpect(jsonPath("$[?(@.updateDate == '2025-11-06')].actualQty").value(0.00)); // No update exists
+                .andExpect(jsonPath("$[?(@.updateDate == '2025-11-06')].actualQty").value(0)); // No update exists
     }
 }
 

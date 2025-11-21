@@ -16,10 +16,7 @@ import com.elina.projects.repository.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -48,7 +45,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @Transactional
 @org.springframework.test.annotation.DirtiesContext(classMode = org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER_CLASS)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class PlanControllerIntegrationTest {
 
     @Autowired
@@ -317,7 +313,6 @@ class PlanControllerIntegrationTest {
     // ========== SINGLE LINE QUICK MODE ==========
 
     @Test
-    @Order(100) // Run this test last to avoid test isolation issues
     void testCreatePlanVersion_SingleLineQuickMode_Success() throws Exception {
         Map<String, Object> payload = new HashMap<>();
         payload.put("taskId", task.getTaskId());

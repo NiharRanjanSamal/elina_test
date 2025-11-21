@@ -7,6 +7,7 @@ import com.elina.authorization.entity.MasterCode;
 import com.elina.authorization.entity.Tenant;
 import com.elina.authorization.repository.MasterCodeRepository;
 import com.elina.authorization.repository.TenantRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -78,6 +79,12 @@ class MasterCodeServiceTest {
         masterCode.setUpdatedOn(LocalDateTime.now());
 
         // SecurityContext stubbings are only set up in tests that need them
+    }
+
+    @AfterEach
+    void tearDown() {
+        TenantContext.clear();
+        SecurityContextHolder.clearContext();
     }
 
     @Test
