@@ -314,15 +314,6 @@ class PlanControllerIntegrationTest {
 
     @Test
     void testCreatePlanVersion_SingleLineQuickMode_Success() throws Exception {
-        // Regenerate token to ensure it's fresh and valid for this test
-        // This helps avoid token expiration or stale token issues when running all tests
-        List<String> roles = new ArrayList<>();
-        roles.add("ROLE_SYSTEM_ADMIN");
-        List<String> permissions = new ArrayList<>();
-        permissions.add("PAGE_PROJECTS_VIEW");
-        permissions.add("PAGE_PROJECTS_EDIT");
-        String freshToken = tokenProvider.generateToken(user.getId(), tenant.getId(), roles, permissions);
-        
         Map<String, Object> payload = new HashMap<>();
         payload.put("taskId", task.getTaskId());
         payload.put("versionDate", LocalDate.now().toString());
@@ -336,7 +327,7 @@ class PlanControllerIntegrationTest {
         payload.put("singleLine", singleLine);
 
         mockMvc.perform(post("/api/plans/create-with-mode")
-                .header("Authorization", "Bearer " + freshToken)
+                .header("Authorization", "Bearer " + authToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(payload)))
                 .andExpect(status().isCreated())
