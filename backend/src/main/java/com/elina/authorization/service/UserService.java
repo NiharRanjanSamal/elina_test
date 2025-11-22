@@ -53,9 +53,12 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("Tenant not found"));
         
         user.setTenant(tenant);
-        if (user.getPasswordHash() != null && !user.getPasswordHash().isEmpty()) {
-            user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
+
+        String rawPassword = user.getPassword();
+        if (rawPassword == null || rawPassword.isEmpty()) {
+            throw new IllegalArgumentException("Password is required");
         }
+        user.setPasswordHash(passwordEncoder.encode(rawPassword));
         
         return userRepository.save(user);
     }
@@ -71,8 +74,9 @@ public class UserService {
         user.setLastName(userDetails.getLastName());
         user.setIsActive(userDetails.getIsActive());
 
-        if (userDetails.getPasswordHash() != null && !userDetails.getPasswordHash().isEmpty()) {
-            user.setPasswordHash(passwordEncoder.encode(userDetails.getPasswordHash()));
+        String rawPassword = userDetails.getPassword();
+        if (rawPassword != null && !rawPassword.isEmpty()) {
+            user.setPasswordHash(passwordEncoder.encode(rawPassword));
         }
 
         return userRepository.save(user);
