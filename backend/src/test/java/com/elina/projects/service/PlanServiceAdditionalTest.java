@@ -10,6 +10,7 @@ import com.elina.projects.dto.*;
 import com.elina.projects.entity.PlanLine;
 import com.elina.projects.entity.PlanVersion;
 import com.elina.projects.entity.Task;
+import com.elina.projects.entity.Wbs;
 import com.elina.projects.exception.NotFoundException;
 import com.elina.projects.repository.*;
 import org.junit.jupiter.api.AfterEach;
@@ -51,7 +52,7 @@ class PlanServiceAdditionalTest {
     private TenantRepository tenantRepository;
 
     @Mock
-    private ConfirmationRepository confirmationRepository;
+    private ConfirmationLockRepository confirmationLockRepository;
 
     @Mock
     private BusinessRuleEngine businessRuleEngine;
@@ -88,6 +89,11 @@ class PlanServiceAdditionalTest {
         task.setStartDate(LocalDate.of(2025, 1, 1));
         task.setEndDate(LocalDate.of(2025, 1, 31));
         task.setActivateFlag(true);
+
+        Wbs wbs = new Wbs();
+        wbs.setWbsId(1L);
+        wbs.setTenant(tenant);
+        task.setWbs(wbs);
 
         SecurityContextHolder.setContext(securityContext);
         org.mockito.Mockito.lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
@@ -146,6 +152,12 @@ class PlanServiceAdditionalTest {
         version.setTenant(tenant);
         version.setTask(task);
         version.setVersionNo(1);
+        version.setVersionDate(LocalDate.of(2025, 1, 5));
+        version.setVersionDate(LocalDate.of(2025, 1, 5));
+        version.setVersionDate(LocalDate.of(2025, 1, 5));
+        version.setVersionDate(LocalDate.of(2025, 1, 5));
+        version.setVersionDate(LocalDate.of(2025, 1, 5));
+        version.setVersionDate(LocalDate.of(2025, 1, 5));
 
         when(planVersionRepository.findById(1L)).thenReturn(Optional.of(version));
 
@@ -173,6 +185,12 @@ class PlanServiceAdditionalTest {
         version.setPlanVersionId(1L);
         version.setTenant(tenant);
         version.setTask(task);
+        version.setVersionDate(LocalDate.of(2025, 1, 5));
+        version.setVersionDate(LocalDate.of(2025, 1, 5));
+        version.setVersionDate(LocalDate.of(2025, 1, 5));
+        version.setVersionDate(LocalDate.of(2025, 1, 5));
+        version.setVersionDate(LocalDate.of(2025, 1, 5));
+        version.setVersionDate(LocalDate.of(2025, 1, 5));
 
         PlanLine line1 = new PlanLine();
         line1.setPlanLineId(1L);
@@ -239,9 +257,10 @@ class PlanServiceAdditionalTest {
         version.setTenant(tenant);
         version.setTask(task);
         version.setVersionNo(1);
+        version.setVersionDate(LocalDate.of(2025, 1, 5));
 
         when(planVersionRepository.findById(1L)).thenReturn(Optional.of(version));
-        when(confirmationRepository.existsByEntityTypeAndEntityId("TASK", task.getTaskId())).thenReturn(false);
+        when(confirmationLockRepository.findLockDateByWbsId(task.getWbs().getWbsId())).thenReturn(null);
         when(planLineRepository.findByPlanVersionId(1L, null)).thenReturn(Collections.emptyList());
 
         // Act
@@ -259,14 +278,16 @@ class PlanServiceAdditionalTest {
         version.setPlanVersionId(1L);
         version.setTenant(tenant);
         version.setTask(task);
+        version.setVersionDate(LocalDate.of(2025, 1, 5));
 
         when(planVersionRepository.findById(1L)).thenReturn(Optional.of(version));
-        when(confirmationRepository.existsByEntityTypeAndEntityId("TASK", task.getTaskId())).thenReturn(true);
+        when(confirmationLockRepository.findLockDateByWbsId(task.getWbs().getWbsId()))
+            .thenReturn(LocalDate.of(2025, 1, 15));
 
         // Act & Assert
         BusinessRuleException exception = assertThrows(BusinessRuleException.class, 
             () -> planService.deletePlanVersion(1L));
-        assertEquals(301, exception.getRuleNumber());
+        assertEquals(102, exception.getRuleNumber());
     }
 
     @Test

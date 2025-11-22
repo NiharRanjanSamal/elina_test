@@ -51,7 +51,7 @@ class PlanServiceTest {
     private TenantRepository tenantRepository;
 
     @Mock
-    private ConfirmationRepository confirmationRepository;
+    private ConfirmationLockRepository confirmationLockRepository;
 
     @Mock
     private BusinessRuleEngine businessRuleEngine;

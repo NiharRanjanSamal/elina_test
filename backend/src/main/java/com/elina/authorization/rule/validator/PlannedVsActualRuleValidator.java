@@ -32,12 +32,22 @@ public class PlannedVsActualRuleValidator implements BusinessRuleValidator {
             return; // No planned quantity to validate against
         }
 
-        // Calculate new actual quantity after update
-        BigDecimal newActualQty = actualQty != null ? actualQty : BigDecimal.ZERO;
-        if (dailyUpdateQty != null) {
-            newActualQty = newActualQty.add(dailyUpdateQty);
+        // For Rule 401: Check if the actual quantity (final value) exceeds planned quantity
+        // actualQty in context is already the NEW value the user wants to set
+        // We should validate the actualQty directly, not add dailyUpdateQty to it
+        BigDecimal newActualQty;
+        if (actualQty != null) {
+            // actualQty is the final value - use it directly
+            newActualQty = actualQty;
         } else if (updateQty != null) {
+            // updateQty is an alternative field for the final value
             newActualQty = updateQty;
+        } else if (dailyUpdateQty != null) {
+            // If only dailyUpdateQty is provided (incremental update), we'd need existing actualQty
+            // But in our case, actualQty should always be provided for task updates
+            newActualQty = dailyUpdateQty;
+        } else {
+            return; // No quantity to validate
         }
 
         if (newActualQty.compareTo(plannedQty) > 0) {

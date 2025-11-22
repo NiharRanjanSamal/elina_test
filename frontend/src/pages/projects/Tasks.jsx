@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../../services/api'
+import ConfirmationLockBanner from '../../components/ConfirmationLockBanner'
+import { confirmationService } from '../../services/confirmationService'
 import { useParams, useNavigate } from 'react-router-dom'
 
 const Tasks = () => {
@@ -20,17 +22,13 @@ const Tasks = () => {
     plannedQty: '',
     unit: ''
   })
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const [confirmingTask, setConfirmingTask] = useState(null)
-  const [confirmFormData, setConfirmFormData] = useState({
-    confirmationDate: new Date().toISOString().split('T')[0],
-    remarks: ''
-  })
+  const [confirmationSummary, setConfirmationSummary] = useState(null)
 
   useEffect(() => {
     if (wbsId) {
       fetchWbs()
       fetchTasks()
+      fetchConfirmationSummary()
     }
   }, [wbsId])
 
@@ -40,6 +38,15 @@ const Tasks = () => {
       setWbs(response.data)
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch WBS')
+    }
+  }
+
+  const fetchConfirmationSummary = async () => {
+    try {
+      const response = await confirmationService.getSummary(wbsId)
+      setConfirmationSummary(response.data)
+    } catch (err) {
+      console.error('Failed to load confirmation summary', err)
     }
   }
 
@@ -140,46 +147,6 @@ const Tasks = () => {
     }
   }
 
-  const handleConfirm = (task) => {
-    setConfirmingTask(task)
-    setConfirmFormData({
-      confirmationDate: new Date().toISOString().split('T')[0],
-      remarks: ''
-    })
-    setShowConfirmModal(true)
-  }
-
-  const handleConfirmSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-
-    if (!confirmFormData.confirmationDate) {
-      setError('Confirmation date is required')
-      return
-    }
-
-    try {
-      const payload = {
-        entityType: 'TASK',
-        entityId: confirmingTask.taskId,
-        confirmationDate: confirmFormData.confirmationDate,
-        remarks: confirmFormData.remarks || null
-      }
-
-      await api.post('/api/confirmations', payload)
-      setShowConfirmModal(false)
-      setConfirmingTask(null)
-      setConfirmFormData({
-        confirmationDate: new Date().toISOString().split('T')[0],
-        remarks: ''
-      })
-      fetchTasks()
-      fetchWbs() // Refresh WBS data to show updated confirmation status
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to confirm task')
-    }
-  }
-
   const formatDate = (dateString) => {
     if (!dateString) return '-'
     try {
@@ -241,6 +208,31 @@ const Tasks = () => {
         {error && (
           <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
             {error}
+          </div>
+        )}
+
+        {confirmationSummary && (
+          <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Last Confirmation Date</p>
+                <p className="text-xl font-semibold text-gray-900">
+                  {confirmationSummary.lastConfirmationDate || '—'}
+                </p>
+                <p className="mt-1 text-sm text-gray-500">
+                  Confirmed Qty to Date: <span className="font-medium">{confirmationSummary.confirmedQtyToDate ?? 0}</span>
+                </p>
+              </div>
+              <button
+                onClick={() => navigate(`/wbs/${wbsId}/confirmations`)}
+                className="w-full rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 md:w-auto"
+              >
+                Manage Confirmations
+              </button>
+            </div>
+            <div className="mt-4">
+              <ConfirmationLockBanner lockDate={confirmationSummary.lockDate} />
+            </div>
           </div>
         )}
 
@@ -314,15 +306,6 @@ const Tasks = () => {
                     >
                       Plans
                     </button>
-                    {!task.isConfirmed && (
-                      <button
-                        onClick={() => handleConfirm(task)}
-                        className="text-yellow-600 hover:text-yellow-900 mr-4"
-                        title="Confirm Task"
-                      >
-                        Confirm
-                      </button>
-                    )}
                     <button
                       onClick={() => handleEdit(task)}
                       className="text-indigo-600 hover:text-indigo-900 mr-4"
@@ -485,92 +468,6 @@ const Tasks = () => {
                     className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
                   >
                     {editingTask ? 'Update' : 'Create'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Confirmation Modal */}
-        {showConfirmModal && confirmingTask && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Confirm Task
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowConfirmModal(false)
-                    setConfirmingTask(null)
-                  }}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              {error && (
-                <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-                  {error}
-                </div>
-              )}
-
-              <div className="mb-4">
-                <p className="text-sm text-gray-600">
-                  <span className="font-medium">Task:</span> {confirmingTask.taskCode} - {confirmingTask.taskName}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Note: Business rules may prevent confirmation if the task is already confirmed.
-                </p>
-              </div>
-
-              <form onSubmit={handleConfirmSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Confirmation Date <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                    value={confirmFormData.confirmationDate}
-                    onChange={(e) => setConfirmFormData({ ...confirmFormData, confirmationDate: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Remarks
-                  </label>
-                  <textarea
-                    rows={3}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                    value={confirmFormData.remarks}
-                    onChange={(e) => setConfirmFormData({ ...confirmFormData, remarks: e.target.value })}
-                    placeholder="Enter remarks (optional)"
-                  />
-                </div>
-
-                <div className="flex justify-end space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowConfirmModal(false)
-                      setConfirmingTask(null)
-                    }}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700"
-                  >
-                    Confirm
                   </button>
                 </div>
               </form>

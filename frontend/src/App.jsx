@@ -12,7 +12,9 @@ import Projects from './pages/projects/Projects'
 import WbsHierarchy from './pages/projects/WbsHierarchy'
 import Tasks from './pages/projects/Tasks'
 import TaskUpdates from './pages/projects/TaskUpdates'
+import ConfirmationPage from './pages/projects/ConfirmationPage'
 import PlanVersions from './pages/projects/PlanVersions'
+import ResourceAllocationPage from './pages/projects/ResourceAllocationPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import TopBar from './components/TopBar'
 import RuleViolationModal from './components/RuleViolationModal'
@@ -111,6 +113,24 @@ function App() {
               <ProtectedRoute>
                 <TopBar />
                 <Tasks />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/wbs/:wbsId/confirmations"
+            element={
+              <ProtectedRoute>
+                <TopBar />
+                <ConfirmationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/wbs/:wbsId/resources"
+            element={
+              <ProtectedRoute>
+                <TopBar />
+                <ResourceAllocationPage />
               </ProtectedRoute>
             }
           />

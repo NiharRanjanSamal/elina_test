@@ -1,59 +1,39 @@
 package com.elina.projects.repository;
 
 import com.elina.authorization.repository.TenantAwareRepository;
-import com.elina.projects.entity.Confirmation;
+import com.elina.projects.entity.ConfirmationEntity;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 /**
- * Repository for Confirmation entity with tenant-aware queries.
- * 
- * Tenant enforcement: All queries automatically filter by tenant_id from TenantContext.
+ * Repository for ConfirmationEntity with tenant aware queries.
  */
 @Repository
-public interface ConfirmationRepository extends TenantAwareRepository<Confirmation, Long> {
-    
-    /**
-     * Find confirmation by entity type and entity ID.
-     */
-    @Query("SELECT c FROM Confirmation c WHERE c.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
-           "AND c.entityType = :entityType AND c.entityId = :entityId")
-    Optional<Confirmation> findByEntityTypeAndEntityId(
-        @Param("entityType") String entityType,
-        @Param("entityId") Long entityId
-    );
+public interface ConfirmationRepository extends TenantAwareRepository<ConfirmationEntity, Long> {
 
-    /**
-     * Find all confirmations for a project.
-     */
-    @Query("SELECT c FROM Confirmation c WHERE c.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
-           "AND c.entityType IN ('WBS', 'TASK') " +
-           "ORDER BY c.confirmationDate DESC, c.confirmedOn DESC")
-    List<Confirmation> findAllForProject();
+    @Query("SELECT c FROM ConfirmationEntity c WHERE c.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
+           "AND c.entityType = 'WBS' AND c.entityId = :wbsId ORDER BY c.confirmationDate DESC, c.confirmationId DESC")
+    List<ConfirmationEntity> findByWbsIdOrderByConfirmationDateDesc(@Param("wbsId") Long wbsId);
 
-    /**
-     * Check if entity is confirmed.
-     */
-    @Query("SELECT COUNT(c) > 0 FROM Confirmation c WHERE c.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
-           "AND c.entityType = :entityType AND c.entityId = :entityId")
-    boolean existsByEntityTypeAndEntityId(@Param("entityType") String entityType, @Param("entityId") Long entityId);
+    @Query("SELECT c FROM ConfirmationEntity c WHERE c.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
+           "AND c.confirmationId = :confirmationId")
+    Optional<ConfirmationEntity> findByIdForTenant(@Param("confirmationId") Long confirmationId);
 
-    /**
-     * Find confirmation by entity type and entity ID that covers a specific date.
-     * Used to check if an update date is locked by a confirmation.
-     * A confirmation "covers" a date if confirmation_date >= update_date.
-     */
-    @Query("SELECT c FROM Confirmation c WHERE c.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
-           "AND c.entityType = :entityType AND c.entityId = :entityId " +
-           "AND c.confirmationDate >= :updateDate")
-    Optional<Confirmation> findLockingConfirmation(
-        @Param("entityType") String entityType,
-        @Param("entityId") Long entityId,
-        @Param("updateDate") java.time.LocalDate updateDate
-    );
+    // Note: confirmedQty doesn't exist in database - this method returns 0 for now
+    // TODO: Calculate from task_updates if needed
+    @Query("SELECT CAST(0 AS java.math.BigDecimal) FROM ConfirmationEntity c WHERE c.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
+           "AND c.entityType = 'WBS' AND c.entityId = :wbsId")
+    BigDecimal sumConfirmedQtyByWbs(@Param("wbsId") Long wbsId);
+
+    @Query("SELECT MAX(c.confirmationDate) FROM ConfirmationEntity c WHERE c.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
+           "AND c.entityType = 'WBS' AND c.entityId = :wbsId")
+    LocalDate findLatestConfirmationDateForWbs(@Param("wbsId") Long wbsId);
+
 }
 

@@ -24,17 +24,20 @@ public class TaskDateRangeRuleValidator implements BusinessRuleValidator {
 
     private void validateStartDateCannotBeInFuture(BusinessRule rule, BusinessRuleContext context) {
         LocalDate today = LocalDate.now();
-        LocalDate taskStartDate = context.getTaskStartDate();
+        LocalDate candidateDate = context.getConfirmationDate() != null
+            ? context.getConfirmationDate()
+            : context.getTaskStartDate();
 
-        if (taskStartDate != null && taskStartDate.isAfter(today)) {
+        if (candidateDate != null && candidateDate.isAfter(today)) {
             throw new BusinessRuleException(
                 rule.getRuleNumber(),
-                String.format("Task start date (%s) cannot be in the future.", taskStartDate),
-                "Task start date must be today or in the past."
+                String.format("Date %s cannot be in the future.", candidateDate),
+                "Select today or a past date."
             );
         }
 
         // Also validate end date is after start date
+        LocalDate taskStartDate = context.getTaskStartDate();
         LocalDate taskEndDate = context.getTaskEndDate();
         if (taskStartDate != null && taskEndDate != null && taskEndDate.isBefore(taskStartDate)) {
             throw new BusinessRuleException(

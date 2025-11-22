@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -77,5 +78,13 @@ public interface TaskUpdateRepository extends TenantAwareRepository<TaskUpdate, 
            "AND (:activeOnly IS NULL OR :activeOnly = false OR tu.activateFlag = true) " +
            "ORDER BY tu.updateDate DESC")
     List<TaskUpdate> findForTenant(@Param("activeOnly") Boolean activeOnly);
+
+    @Query("SELECT COALESCE(SUM(tu.actualQty), 0) FROM TaskUpdate tu WHERE tu.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
+           "AND tu.task.wbs.wbsId = :wbsId AND tu.updateDate = :targetDate AND tu.activateFlag = true")
+    BigDecimal sumActualQtyForWbsAndDate(@Param("wbsId") Long wbsId, @Param("targetDate") LocalDate targetDate);
+
+    @Query("SELECT COALESCE(SUM(tu.actualQty), 0) FROM TaskUpdate tu WHERE tu.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
+           "AND tu.task.wbs.wbsId = :wbsId AND tu.updateDate <= :targetDate AND tu.activateFlag = true")
+    BigDecimal sumActualQtyForWbsUpToDate(@Param("wbsId") Long wbsId, @Param("targetDate") LocalDate targetDate);
 }
 

@@ -39,12 +39,13 @@ import java.util.stream.Collectors;
 public class PlanService {
 
     private static final Logger logger = LoggerFactory.getLogger(PlanService.class);
+    private static final int RULE_BACKDATE_AFTER_LOCK = 102;
 
     private final PlanVersionRepository planVersionRepository;
     private final PlanLineRepository planLineRepository;
     private final TaskRepository taskRepository;
     private final TenantRepository tenantRepository;
-    private final ConfirmationRepository confirmationRepository;
+    private final ConfirmationLockRepository confirmationLockRepository;
     private final BusinessRuleEngine businessRuleEngine;
     private final AuditLogService auditLogService;
 
@@ -52,14 +53,14 @@ public class PlanService {
             PlanLineRepository planLineRepository,
             TaskRepository taskRepository,
             TenantRepository tenantRepository,
-            ConfirmationRepository confirmationRepository,
+            ConfirmationLockRepository confirmationLockRepository,
             BusinessRuleEngine businessRuleEngine,
             AuditLogService auditLogService) {
         this.planVersionRepository = planVersionRepository;
         this.planLineRepository = planLineRepository;
         this.taskRepository = taskRepository;
         this.tenantRepository = tenantRepository;
-        this.confirmationRepository = confirmationRepository;
+        this.confirmationLockRepository = confirmationLockRepository;
         this.businessRuleEngine = businessRuleEngine;
         this.auditLogService = auditLogService;
     }
@@ -568,12 +569,12 @@ public class PlanService {
 
         Task task = version.getTask();
 
-        // Check if task is confirmed
-        boolean taskConfirmed = confirmationRepository.existsByEntityTypeAndEntityId("TASK", task.getTaskId());
-        if (taskConfirmed) {
-            throw new BusinessRuleException(301,
-                    "Cannot delete plan version. Task is already confirmed.",
-                    "Confirmations must be removed before deleting plan versions");
+        LocalDate lockDate = confirmationLockRepository.findLockDateByWbsId(task.getWbs().getWbsId());
+        if (lockDate != null && !version.getVersionDate().isAfter(lockDate)) {
+            throw new BusinessRuleException(RULE_BACKDATE_AFTER_LOCK,
+                    String.format("Cannot delete plan version dated %s because WBS is locked till %s.",
+                            version.getVersionDate(), lockDate),
+                    "Undo or backdate the confirmation before deleting this plan version.");
         }
 
         // Delete plan lines first

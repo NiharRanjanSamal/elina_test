@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -67,5 +69,17 @@ public interface TaskRepository extends TenantAwareRepository<Task, Long> {
      */
     @Query("SELECT COUNT(t) > 0 FROM Task t WHERE t.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} AND t.taskCode = :taskCode")
     boolean existsByTaskCode(@Param("taskCode") String taskCode);
+
+    @Query("SELECT MIN(t.startDate) FROM Task t WHERE t.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
+           "AND t.wbs.wbsId = :wbsId AND t.activateFlag = true")
+    LocalDate findEarliestTaskStartDateForWbs(@Param("wbsId") Long wbsId);
+
+    @Query("SELECT COALESCE(SUM(t.actualQty), 0) FROM Task t WHERE t.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
+           "AND t.wbs.wbsId = :wbsId AND t.activateFlag = true")
+    BigDecimal sumActualQtyByWbsId(@Param("wbsId") Long wbsId);
+
+    @Query("SELECT COALESCE(SUM(t.plannedQty), 0) FROM Task t WHERE t.tenant.id = :#{T(com.elina.authorization.context.TenantContext).getTenantId()} " +
+           "AND t.wbs.wbsId = :wbsId AND t.activateFlag = true")
+    BigDecimal sumPlannedQtyByWbsId(@Param("wbsId") Long wbsId);
 }
 

@@ -18,9 +18,29 @@ spring:
   liquibase:
     enabled: false  # Disable Liquibase for tests - use Hibernate DDL instead
 
+  flyway:
+    enabled: false  # Disable Flyway for tests - use Hibernate DDL instead
+
   h2:
     console:
       enabled: false
+
+  # Disable Redis auto-configuration for tests
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+
+  # Disable Redis connection attempts in tests
+  data:
+    redis:
+      repositories:
+        enabled: false
+
+# Master Data Cache Configuration - Disable caching in tests
+master-data:
+  cache:
+    enabled: false
 
 # JWT Configuration
 jwt:

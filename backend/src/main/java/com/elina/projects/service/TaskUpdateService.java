@@ -41,7 +41,7 @@ public class TaskUpdateService {
     private final TaskRepository taskRepository;
     private final PlanLineRepository planLineRepository;
     private final PlanVersionRepository planVersionRepository;
-    private final ConfirmationRepository confirmationRepository;
+    private final ConfirmationLockRepository confirmationLockRepository;
     private final BusinessRuleEngine businessRuleEngine;
     private final AuditLogService auditLogService;
 
@@ -49,14 +49,14 @@ public class TaskUpdateService {
                             TaskRepository taskRepository,
                             PlanLineRepository planLineRepository,
                             PlanVersionRepository planVersionRepository,
-                            ConfirmationRepository confirmationRepository,
+                            ConfirmationLockRepository confirmationLockRepository,
                             BusinessRuleEngine businessRuleEngine,
                             AuditLogService auditLogService) {
         this.taskUpdateRepository = taskUpdateRepository;
         this.taskRepository = taskRepository;
         this.planLineRepository = planLineRepository;
         this.planVersionRepository = planVersionRepository;
-        this.confirmationRepository = confirmationRepository;
+        this.confirmationLockRepository = confirmationLockRepository;
         this.businessRuleEngine = businessRuleEngine;
         this.auditLogService = auditLogService;
     }
@@ -70,6 +70,18 @@ public class TaskUpdateService {
             return (Long) authentication.getPrincipal();
         }
         return null;
+    }
+
+    private LocalDate resolveLockDate(Task task) {
+        if (task.getWbs() == null) {
+            return null;
+        }
+        if (task.getWbs().getLockDate() != null) {
+            return task.getWbs().getLockDate();
+        }
+        return confirmationLockRepository.findByWbsId(task.getWbs().getWbsId())
+            .map(ConfirmationLockEntity::getLockDate)
+            .orElse(null);
     }
 
     /**
@@ -251,10 +263,7 @@ public class TaskUpdateService {
                 .collect(Collectors.toMap(TaskUpdate::getUpdateDate, u -> u));
 
         // Get confirmation lock for WBS (if exists)
-        Confirmation wbsConfirmation = task.getWbs() != null 
-            ? confirmationRepository.findByEntityTypeAndEntityId("WBS", task.getWbs().getWbsId()).orElse(null)
-            : null;
-        LocalDate lockDate = wbsConfirmation != null ? wbsConfirmation.getConfirmationDate() : null;
+        LocalDate lockDate = resolveLockDate(task);
 
         // Build unified list
         List<TaskUpdateDayWiseDTO> result = new ArrayList<>();
@@ -325,10 +334,7 @@ public class TaskUpdateService {
         }
 
         // Get confirmation lock for WBS
-        Confirmation wbsConfirmation = task.getWbs() != null 
-            ? confirmationRepository.findByEntityTypeAndEntityId("WBS", task.getWbs().getWbsId()).orElse(null)
-            : null;
-        LocalDate lockDate = wbsConfirmation != null ? wbsConfirmation.getConfirmationDate() : null;
+        LocalDate lockDate = resolveLockDate(task);
 
         List<TaskUpdateDTO> results = new ArrayList<>();
 
@@ -465,10 +471,7 @@ public class TaskUpdateService {
         Task task = update.getTask();
 
         // Check confirmation lock
-        Confirmation wbsConfirmation = task.getWbs() != null 
-            ? confirmationRepository.findByEntityTypeAndEntityId("WBS", task.getWbs().getWbsId()).orElse(null)
-            : null;
-        LocalDate lockDate = wbsConfirmation != null ? wbsConfirmation.getConfirmationDate() : null;
+        LocalDate lockDate = resolveLockDate(task);
 
         if (lockDate != null && !update.getUpdateDate().isAfter(lockDate)) {
             // Check Rule 102: BACKDATE_ALLOWED_AFTER_LOCK

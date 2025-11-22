@@ -2,32 +2,39 @@ package com.elina.projects.entity;
 
 import com.elina.authorization.entity.Tenant;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * Confirmation entity representing a confirmation record.
- * 
- * Tenant enforcement: Confirmations belong to a specific tenant.
- * All queries must include tenant_id filter via TenantAwareRepository.
- * 
- * Business rules:
- * - Confirmed entries cannot be overwritten (Rule 301: CONFIRMATION_CANNOT_BE_OVERWRITTEN)
+ * Confirmation entity representing a frozen snapshot of WBS progress for a specific date.
+ *
+ * Tenant enforcement: All confirmation records belong to a tenant and WBS.
+ * Every query must be scoped by tenant_id via TenantAwareRepository.
  */
 @Entity
-@Table(name = "confirmations", indexes = {
-    @Index(name = "idx_confirmations_tenant_id", columnList = "tenant_id"),
-    @Index(name = "idx_confirmations_entity", columnList = "tenant_id,entity_type,entity_id"),
-    @Index(name = "idx_confirmations_date", columnList = "tenant_id,confirmation_date")
-})
-@Data
+@Table(
+    name = "confirmations",
+    uniqueConstraints = {
+        @UniqueConstraint(
+            name = "uk_confirmations_entity_date",
+            columnNames = {"tenant_id", "entity_type", "entity_id", "confirmation_date"}
+        )
+    },
+    indexes = {
+        @Index(name = "idx_confirmations_tenant", columnList = "tenant_id"),
+        @Index(name = "idx_confirmations_entity", columnList = "tenant_id,entity_type,entity_id")
+    }
+)
+@Getter
+@Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class Confirmation {
+@ToString(of = {"confirmationId", "entityType", "entityId", "confirmationDate"})
+public class ConfirmationEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,7 +46,7 @@ public class Confirmation {
     private Tenant tenant;
 
     @Column(name = "entity_type", nullable = false, length = 50)
-    private String entityType; // WBS, TASK
+    private String entityType;
 
     @Column(name = "entity_id", nullable = false)
     private Long entityId;
@@ -67,9 +74,7 @@ public class Confirmation {
         if (createdOn == null) {
             createdOn = LocalDateTime.now();
         }
-        if (confirmedOn == null) {
-            confirmedOn = LocalDateTime.now();
-        }
     }
 }
+
 

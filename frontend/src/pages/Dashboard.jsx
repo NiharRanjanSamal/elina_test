@@ -137,6 +137,17 @@ const Dashboard = () => {
               </div>
             </div>
 
+            <div className="mt-6 bg-white shadow rounded-lg p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Resource Management</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                  <h3 className="font-medium text-gray-900">Resource Allocation</h3>
+                  <p className="text-sm text-gray-500 mt-1">Allocate manpower and equipment to WBS</p>
+                  <p className="text-xs text-gray-400 mt-2">Navigate to Projects → Select Project → WBS Hierarchy → Click "Resources" button on any WBS</p>
+                </div>
+              </div>
+            </div>
+
             {user?.roles && user.roles.length > 0 && (
               <div className="mt-6 bg-white shadow rounded-lg p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Your Roles</h2>

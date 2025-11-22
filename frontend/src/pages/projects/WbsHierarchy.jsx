@@ -22,12 +22,6 @@ const WbsHierarchy = () => {
     endDate: '',
     parentWbsId: null
   })
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const [confirmingEntity, setConfirmingEntity] = useState(null)
-  const [confirmFormData, setConfirmFormData] = useState({
-    confirmationDate: new Date().toISOString().split('T')[0],
-    remarks: ''
-  })
 
   useEffect(() => {
     if (projectId) {
@@ -50,25 +44,39 @@ const WbsHierarchy = () => {
       setLoading(true)
       const response = await api.get(`/api/wbs/project/${projectId}/hierarchy`)
       const wbsData = response.data || []
-      setWbsList(wbsData)
       
-      // Build hierarchy tree
-      const rootNodes = wbsData.filter(w => !w.parentWbsId)
-      const buildTree = (parentId) => {
-        return wbsData
-          .filter(w => w.parentWbsId === parentId)
-          .map(w => ({
-            ...w,
-            children: buildTree(w.wbsId)
-          }))
+      // Backend already returns hierarchical structure with children populated
+      // But we also need a flat list for the parent WBS dropdown
+      const flattenWbs = (nodes, result = []) => {
+        nodes.forEach(node => {
+          result.push(node)
+          if (node.children && node.children.length > 0) {
+            flattenWbs(node.children, result)
+          }
+        })
+        return result
       }
+      setWbsList(flattenWbs(wbsData))
       
-      const tree = rootNodes.map(node => ({
-        ...node,
-        children: buildTree(node.wbsId)
-      }))
+      // Use the hierarchical structure directly from API
+      setHierarchy(wbsData)
       
-      setHierarchy(tree)
+      // Auto-expand all nodes that have children so child WBS are visible
+      const expandAllNodes = (nodes) => {
+        const expanded = new Set()
+        const traverse = (nodeList) => {
+          nodeList.forEach(node => {
+            if (node.children && node.children.length > 0) {
+              expanded.add(node.wbsId)
+              traverse(node.children)
+            }
+          })
+        }
+        traverse(wbsData)
+        return expanded
+      }
+      setExpandedNodes(expandAllNodes(wbsData))
+      
       setError('')
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch WBS hierarchy')
@@ -108,6 +116,10 @@ const WbsHierarchy = () => {
         await api.put(`/api/wbs/${editingWbs.wbsId}`, payload)
       } else {
         await api.post('/api/wbs', payload)
+        // If creating a child WBS, expand the parent node to show it
+        if (payload.parentWbsId) {
+          setExpandedNodes(prev => new Set([...prev, payload.parentWbsId]))
+        }
       }
       
       setShowForm(false)
@@ -165,46 +177,6 @@ const WbsHierarchy = () => {
       fetchWbsHierarchy()
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete WBS')
-    }
-  }
-
-  const handleConfirm = (wbs) => {
-    setConfirmingEntity({ type: 'WBS', id: wbs.wbsId, name: wbs.wbsName })
-    setConfirmFormData({
-      confirmationDate: new Date().toISOString().split('T')[0],
-      remarks: ''
-    })
-    setShowConfirmModal(true)
-  }
-
-  const handleConfirmSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-
-    if (!confirmFormData.confirmationDate) {
-      setError('Confirmation date is required')
-      return
-    }
-
-    try {
-      const payload = {
-        entityType: confirmingEntity.type,
-        entityId: confirmingEntity.id,
-        confirmationDate: confirmFormData.confirmationDate,
-        remarks: confirmFormData.remarks || null
-      }
-
-      await api.post('/api/confirmations', payload)
-      setShowConfirmModal(false)
-      setConfirmingEntity(null)
-      setConfirmFormData({
-        confirmationDate: new Date().toISOString().split('T')[0],
-        remarks: ''
-      })
-      fetchWbsHierarchy()
-      fetchProject() // Refresh project data to show updated confirmation status
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to confirm WBS')
     }
   }
 
@@ -289,6 +261,17 @@ const WbsHierarchy = () => {
                 <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">Confirmed</span>
               )}
             </span>
+            <div className="mt-1">
+              {node.lockDate ? (
+                <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                  Locked till {node.lockDate}
+                </span>
+              ) : (
+                <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
+                  No lock
+                </span>
+              )}
+            </div>
             <button
               onClick={() => navigate(`/wbs/${node.wbsId}/tasks`)}
               className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
@@ -296,15 +279,20 @@ const WbsHierarchy = () => {
             >
               Tasks
             </button>
-            {!node.isConfirmed && (
-              <button
-                onClick={() => handleConfirm(node)}
-                className="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200"
-                title="Confirm WBS"
-              >
-                Confirm
-              </button>
-            )}
+            <button
+              onClick={() => navigate(`/wbs/${node.wbsId}/confirmations`)}
+              className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200"
+              title="Open confirmations"
+            >
+              Confirmations
+            </button>
+            <button
+              onClick={() => navigate(`/wbs/${node.wbsId}/resources`)}
+              className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded hover:bg-orange-200"
+              title="Resource Allocation"
+            >
+              Resources
+            </button>
             <button
               onClick={() => handleAddChild(node.wbsId)}
               className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200"
@@ -534,92 +522,6 @@ const WbsHierarchy = () => {
                     className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
                   >
                     {editingWbs ? 'Update' : 'Create'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Confirmation Modal */}
-        {showConfirmModal && confirmingEntity && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Confirm {confirmingEntity.type}
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowConfirmModal(false)
-                    setConfirmingEntity(null)
-                  }}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              {error && (
-                <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-                  {error}
-                </div>
-              )}
-
-              <div className="mb-4">
-                <p className="text-sm text-gray-600">
-                  <span className="font-medium">{confirmingEntity.type}:</span> {confirmingEntity.name}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Note: Business rules may prevent confirmation if the entity is already confirmed.
-                </p>
-              </div>
-
-              <form onSubmit={handleConfirmSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Confirmation Date <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                    value={confirmFormData.confirmationDate}
-                    onChange={(e) => setConfirmFormData({ ...confirmFormData, confirmationDate: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Remarks
-                  </label>
-                  <textarea
-                    rows={3}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                    value={confirmFormData.remarks}
-                    onChange={(e) => setConfirmFormData({ ...confirmFormData, remarks: e.target.value })}
-                    placeholder="Enter remarks (optional)"
-                  />
-                </div>
-
-                <div className="flex justify-end space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowConfirmModal(false)
-                      setConfirmingEntity(null)
-                    }}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700"
-                  >
-                    Confirm
                   </button>
                 </div>
               </form>

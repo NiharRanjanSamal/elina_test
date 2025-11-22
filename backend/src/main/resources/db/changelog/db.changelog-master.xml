@@ -30,6 +30,7 @@
     <include file="db/changelog/changes/023-seed-plan-versions.xml"/>
     <include file="db/changelog/changes/024-add-projects-permissions.xml"/>
     <include file="db/changelog/changes/025-assign-admin-work-center-authorizations.xml"/>
+    <include file="db/changelog/changes/026-resource-allocation-module.xml"/>
 
 </databaseChangeLog>
 
